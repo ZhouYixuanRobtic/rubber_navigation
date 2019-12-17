@@ -9,6 +9,7 @@
 ### Dependences
 
 ​	This project relies on my another project `Visual-Servo` and `move_base`; `yocs-velocity-smoother`;`robot_pose_ekg`;`Eigen3`
+    The `slef-dev` don't depend on the `visual-servo` package. 
 
 ### INSTALL
 
