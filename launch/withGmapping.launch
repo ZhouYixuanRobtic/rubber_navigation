@@ -1,0 +1,48 @@
+<launch>
+    <include file="$(find rubber_navigation)/launch/baseOnly.launch"/>
+
+    <param name="robot_description" textfile="$(find cartographer_ros)/urdf/velodyne2d.urdf"/>
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+
+    <node pkg="rviz" type="rviz" name="rviz"
+          args="-d $(find rubber_navigation)/config/rviz/gmapping.rviz"/>
+
+    <include file="$(find sick_tim)/launch/sick_tim551_2050001.launch" />
+
+    <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping" output="screen" clear_params="true">
+        <param name="odom_frame" value="odom"/>
+        <param name="map_update_interval" value="0.01"/>
+        <!-- Set maxUrange < actual maximum range of the Laser -->
+        <param name="maxRange" value="8.0"/>
+        <param name="maxUrange" value="6"/>
+        <param name="sigma" value="0.01"/>
+        <param name="kernelSize" value="1"/>
+        <param name="lstep" value="0.05"/>
+        <param name="astep" value="0.05"/>
+        <param name="iterations" value="5"/>
+        <param name="lsigma" value="0.075"/>
+        <param name="ogain" value="3.0"/>
+        <param name="lskip" value="0"/>
+        <param name="minimumScore" value="0"/>
+        <param name="srr" value="0.015"/>
+        <param name="srt" value="0.015"/>
+        <param name="str" value="0.015"/>
+        <param name="stt" value="0.015"/>
+        <param name="linearUpdate" value="0.5"/>
+        <param name="angularUpdate" value="0.436"/>
+        <param name="temporalUpdate" value="-1.0"/>
+        <param name="resampleThreshold" value="0.5"/>
+        <param name="particles" value="20"/>
+        <param name="xmin" value="-1.0"/>
+        <param name="ymin" value="-1.0"/>
+        <param name="xmax" value="1.0"/>
+        <param name="ymax" value="1.0"/>
+
+        <param name="delta" value="0.05"/>
+        <param name="llsamplerange" value="0.01"/>
+        <param name="llsamplestep" value="0.01"/>
+        <param name="lasamplerange" value="0.005"/>
+        <param name="lasamplestep" value="0.005"/>
+        <!--remap from="scan" to="$(arg )"/-->
+    </node>
+</launch>

@@ -16,19 +16,9 @@ if(NOT EIGEN3_INCLUDE_DIRS)
 endif()
 
 find_package(catkin REQUIRED COMPONENTS
-  actionlib
-  geometric_shapes
-  geometry_msgs
-  message_generation
-  move_base_msgs
-  nav_msgs
-  roscpp
-  rospy
-  sensor_msgs
-  std_msgs
-  tf2_eigen
-  tf2_geometry_msgs
-  visual_servo
+  actionlib geometric_shapes geometry_msgs
+  message_generation move_base_msgs nav_msgs
+  roscpp rospy sensor_msgs std_msgs tf2_eigen tf2_geometry_msgs roslib
   tf2_ros
 )
 
@@ -63,7 +53,6 @@ catkin_package(
         roscpp
         tf
         nav_msgs
-        visual_servo
     DEPENDS
         YAML
         EIGEN3
@@ -74,18 +63,10 @@ catkin_package(
 ###########
 ## Build ##
 ###########
-
-#set(VISUAL_SERVO_INCLUDE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../Visual-Servo/include/visual_servo/)
-set(VISUAL_SERVO_AUBO_INCLUDE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../Visual-Servo/include/dependents/robotSDK/inc/)
-set(VISUAL_SERVO_INCLUDE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../Visual-Servo/include/visual_servo/)
-message(${visual_servo_INCLUDE_DIRS})
 include_directories(
     include
     ${catkin_INCLUDE_DIRS}
     ${YAML_INCLUDE_DIRS}
-    ${visual_servo_INCLUDE_DIRS}
-    ${VISUAL_SERVO_AUBO_INCLUDE_PATH}
-        ${VISUAL_SERVO_INCLUDE_PATH}
 )
 link_directories(
         ${catkin_LIBRARY_DIRS}
@@ -93,30 +74,31 @@ link_directories(
         ${YAML_LIBRARIES}
 )
 
+add_library(Navi_SerialManager src/SerialManager.cpp)
+target_link_libraries(Navi_SerialManager ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+add_library(NaviJoyTeleop src/JoyTeleop.cpp)
+target_link_libraries(NaviJoyTeleop ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
 add_library(NaviSerialManager src/NaviSerialManager.cpp)
-target_link_libraries(NaviSerialManager ${catkin_LIBRARIES} ${Boost_LIBRARIES} SerialManager)
+target_link_libraries(NaviSerialManager ${catkin_LIBRARIES} ${Boost_LIBRARIES} Navi_SerialManager)
 
 add_library(BaseController src/BaseController.cpp)
-target_link_libraries(BaseController ${catkin_LIBRARIES} ${Boost_LIBRARIES} NaviSerialManager)
+target_link_libraries(BaseController ${catkin_LIBRARIES} ${Boost_LIBRARIES} NaviSerialManager yaml-cpp)
 add_dependencies(BaseController ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
 
 add_library(NavCore src/NavCore.cpp)
 target_link_libraries(NavCore ${catkin_LIBRARIES} ${Boost_LIBRARIES} BaseController)
 
 
-
-add_executable(rubber_navigation src/main.cpp)
-target_link_libraries(rubber_navigation ${catkin_LIBRARIES} NavCore JoyTeleop parameterTeleop)
-add_dependencies(rubber_navigation ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
-
 add_executable(odomFilter src/odomFilter.cpp)
 target_link_libraries(odomFilter ${catkin_LIBRARIES})
 
 add_executable(baseOnly src/BaseOnly.cpp)
-target_link_libraries(baseOnly ${catkin_LIBRARIES} BaseController)
+target_link_libraries(baseOnly ${catkin_LIBRARIES} BaseController NaviJoyTeleop)
 
 add_executable(simpleNav src/simpleNav.cpp)
-target_link_libraries(simpleNav ${catkin_LIBRARIES} BaseController NavCore ${Boost_LIBRARIES})
+target_link_libraries(simpleNav ${catkin_LIBRARIES} BaseController NavCore ${Boost_LIBRARIES} NaviJoyTeleop)
 
 add_executable(goalSaver src/goalSaver.cpp)
-target_link_libraries(goalSaver ${catkin_LIBRARIES} JoyTeleop)
+target_link_libraries(goalSaver ${catkin_LIBRARIES} NaviJoyTeleop)

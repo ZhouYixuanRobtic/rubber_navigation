@@ -3,7 +3,7 @@
     <arg name="map_frame" default="map"/>
     <arg name="odom_frame" default="odom"/>
     <!--TF STATIC-->
-    <param name="robot_description" command="xacro --inorder  '$(find aubo_gazebo)/urdf/aubo_i5.xacro'"/>
+    <param name="robot_description" textfile="$(find cartographer_ros)/urdf/velodyne2d.urdf"/>
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
     <!--move_base-->
     <include file="$(find rubber_navigation)/launch/move_base.launch"/>
@@ -23,7 +23,7 @@
         <remap from="odom" to="odom_raw"/>
         <remap from="imu_data" to="imu/data_raw"/>
         <!-- comment this line when use amcl or cartographer with odom-->
-        <remap from="tf" to="tf_no_odom"/>
+        <!--remap from="tf" to="tf_no_odom"/-->
     </node>
 
     <node name="odomFilter" pkg="rubber_navigation" type="odomFilter">

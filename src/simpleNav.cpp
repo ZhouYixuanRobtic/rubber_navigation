@@ -5,7 +5,7 @@
 #include <fstream>
 #include "geometry_msgs/Pose2D.h"
 
-#include "../../Visual-Servo/include/visual_servo/JoyTeleop.h"
+#include "rubber_navigation/JoyTeleop.h"
 
 struct targetPose{
     geometry_msgs::Pose2D pose;

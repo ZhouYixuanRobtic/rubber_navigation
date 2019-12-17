@@ -5,7 +5,7 @@
 #ifndef VISUAL_SERVO_NAVISERIALMANAGER_H
 #define VISUAL_SERVO_NAVISERIALMANAGER_H
 
-#include "../../Visual-Servo/include/visual_servo/SerialManager.h"
+#include "rubber_navigation/SerialManager.h"
 #define COMMAND_SIZE 8
 #define RESULT_SIZE COMMAND_SIZE*10
 class NaviSerialManager : public SerialManager{

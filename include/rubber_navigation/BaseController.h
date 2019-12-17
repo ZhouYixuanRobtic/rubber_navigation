@@ -11,7 +11,8 @@
 #include "tf/transform_datatypes.h"
 #include "rubber_navigation/WheelStatus.h"
 #include <yaml-cpp/yaml.h>
-#include "limits.h"
+#include <climits>
+
 #ifdef HAVE_NEW_YAMLCPP
 // The >> operator disappeared in yaml-cpp 0.5, so this function is
 // added to provide support for code written under the yaml-cpp 0.3 API.
