@@ -1,6 +1,6 @@
 <launch>
 
-    <arg name="publish_robot_source_odom_tf" default="false"/>
+    <arg name="publish_robot_source_odom_tf" default="true"/>
 
     <node name="base_only" pkg="rubber_navigation" type="baseOnly" output="screen">
         <param name="base_foot_print" value="base_link"/>

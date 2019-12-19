@@ -1,7 +1,10 @@
 <launch>
 
-    <arg name="publish_robot_source_odom_tf" default="true"/>
+    <arg name="publish_robot_source_odom_tf" default="false"/>
 
+    <include file ="$(find cartographer_ros)/launch/demo_velodyne2d_localization.launch">
+        <arg name="load_state_filename" value="$(find rubber_navigation)/config/map/map.bag.pbstream"/>
+    </include>
 
     <!--move_base-->
     <include file="$(find rubber_navigation)/launch/move_base.launch"/>
