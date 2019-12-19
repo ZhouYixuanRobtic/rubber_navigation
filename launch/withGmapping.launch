@@ -1,5 +1,10 @@
 <launch>
-    <include file="$(find rubber_navigation)/launch/baseOnly.launch"/>
+
+    <arg name="publish_robot_source_odom_tf" default="true"/>
+
+    <include file="$(find rubber_navigation)/launch/baseOnly.launch">
+        <arg name="publish_robot_source_odom_tf" value="$(arg publish_robot_source_odom_tf)"/>
+    </include>
 
     <node pkg="rviz" type="rviz" name="rviz"
           args="-d $(find rubber_navigation)/config/rviz/gmapping.rviz"/>
