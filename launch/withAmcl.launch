@@ -2,34 +2,17 @@
     <arg name="base_foot_print" default="base_link"/>
     <arg name="map_frame" default="map"/>
     <arg name="odom_frame" default="odom"/>
+
     <!--TF STATIC-->
-    <param name="robot_description" textfile="$(find cartographer_ros)/urdf/velodyne2d.urdf"/>
-    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+    <!-- odom related-->
     <!--move_base-->
     <include file="$(find rubber_navigation)/launch/move_base.launch"/>
-    <!-- odom related-->
-    <include file="$(find rubber_navigation)/launch/baseOnly.launch"/>
 
-    <node pkg="robot_pose_ekf" type="robot_pose_ekf" name="robot_pose_ekf">
-        <param name="base_footprint_frame" value="base_link"/>
-        <param name="output_frame" value="odom"/>
-        <param name="freq" value="30.0"/>
-        <param name="sensor_timeout" value="1.0"/>
-        <param name="odom_used" value="true"/>
-        <param name="imu_used" value="true"/>
-        <param name="vo_used" value="false"/>
-        <param name="debug" value="false"/>
-        <param name="self_diagnose" value="false"/>
-        <remap from="odom" to="odom_raw"/>
-        <remap from="imu_data" to="imu/data_raw"/>
-        <!-- comment this line when use amcl or cartographer with odom-->
-        <!--remap from="tf" to="tf_no_odom"/-->
-    </node>
+    <include file="$(find rubber_navigation)/launch/common.launch"/>
 
-    <node name="odomFilter" pkg="rubber_navigation" type="odomFilter">
-        <param name="base_foot_print" value="$(arg base_foot_print)"/>
-        <param name="odom_frame" value="$(arg odom_frame)"/>
-    </node>
+    <include file="$(find sick_tim)/launch/sick_tim551_2050001.launch" />
+
+    <include file="$(find rubber_navigation)/launch/amcl.launch"/>
 
     <node name="goalSaver" pkg="rubber_navigation" type="goalSaver" required="true">
         <param name="map_frame" value="map"/>
@@ -37,7 +20,7 @@
         <param name="file_name" value="$(find rubber_navigation)/config/treeTarget.txt"/>
     </node>
     <!-- map related-->
-    <!--node name="map_server" pkg="map_server" type="map_server" args="/home/xcy/real.yaml"/-->
-    <node name="rviz" pkg="rviz" type="rviz" /> <!---args="-d /home/xcy/111.rviz"/-->
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find rubber_navigation)/config/rviz/amcl.rviz"/>
 
+    <node name="simpleNav" pkg="rubber_navigation" type="simpleNav" output="screen"/>
 </launch>

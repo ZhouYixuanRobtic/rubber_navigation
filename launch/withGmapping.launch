@@ -1,9 +1,6 @@
 <launch>
     <include file="$(find rubber_navigation)/launch/baseOnly.launch"/>
 
-    <param name="robot_description" textfile="$(find cartographer_ros)/urdf/velodyne2d.urdf"/>
-    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
-
     <node pkg="rviz" type="rviz" name="rviz"
           args="-d $(find rubber_navigation)/config/rviz/gmapping.rviz"/>
 

@@ -1,6 +1,4 @@
 <launch>
-    <param name="use_sim_time" value="false" />
-
     <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="true">
 
         <rosparam file="$(find rubber_navigation)/config/costmap_common_params.yaml" command="load" ns="global_costmap" />
@@ -11,5 +9,7 @@
         <rosparam file="$(find rubber_navigation)/config/dwa_local_planner_params.yaml" command="load" />
         <rosparam file="$(find rubber_navigation)/config/global_planner_params.yaml" command="load" />
     </node>
+
+    <node name="map_server" pkg="map_server" type="map_server" args="$(find rubber_navigation)/config/map/map.yaml"/>
 
 </launch>

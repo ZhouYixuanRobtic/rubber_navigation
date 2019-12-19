@@ -9,6 +9,7 @@
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
 #include "geometry_msgs/Twist.h"
 #include "tf/transform_datatypes.h"
+#include "tf/transform_broadcaster.h"
 #include "rubber_navigation/WheelStatus.h"
 #include <yaml-cpp/yaml.h>
 #include <climits>
@@ -93,14 +94,15 @@ private:
 
     ros::Publisher wheel_status_pub;
     ros::Publisher odom_raw_pub;
+    tf::TransformBroadcaster broad_caster;
 
     ros::Subscriber cmd_vel_sub;
     ros::Subscriber joy_vel_sub;
 
-    ros::WallTimer timer_;
-    ros::WallTimer odom_publish_timer_;
+    ros::Timer timer_;
+    ros::Timer odom_publish_timer_;
 
-    ros::WallTime encoder_pre{},encoder_after{},encoder_start{},encoder_stop{};
+    ros::Time encoder_pre{},encoder_after{},encoder_start{},encoder_stop{};
 
     double linear_velocity_{},angular_velocity_{};
     double global_x{0.0},global_y{0.0},global_theta{0.0};
@@ -108,16 +110,21 @@ private:
     bool joy_vel_received_{};
     bool cmd_vel_received_{};
     int battery;
+
+    bool publish_tf_{};
+
+    bool right_updated{},left_updated{};
+
     unsigned char xor_msgs(unsigned char* msg);
     void init_send_msgs();
-    void timerCallback(const ros::WallTimerEvent & e);
-    void odom_publish_timer_callback(const ros::WallTimerEvent & e);
+    void timerCallback(const ros::TimerEvent & e);
+    void odom_publish_timer_callback(const ros::TimerEvent & e);
     void cmd_velCallback(const geometry_msgs::TwistConstPtr & msg);
     void joy_velCallback(const geometry_msgs::TwistConstPtr & msg);
     int parsingMsg();
     void odom_parsing();
 public:
-    BaseController(std::string serial_addr, unsigned int baudrate,std::string base_foot_print,std::string odom_frame);
+    BaseController(std::string serial_addr, unsigned int baudrate,std::string base_foot_print,std::string odom_frame,bool publish_tf=false);
     ~BaseController();
     void sendCommand(Command user_command);
     void sendVelocity(Cmd_vel user_cmd_vel);

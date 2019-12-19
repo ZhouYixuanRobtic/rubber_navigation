@@ -1,4 +1,7 @@
 <launch>
-    <param name="use_sim_time" value="false" />
+
+    <include file="$(find rubber_navigation)/launch/common.launch"/>
+
     <node name="base_only" pkg="rubber_navigation" type="baseOnly" output="screen"/>
+
 </launch>

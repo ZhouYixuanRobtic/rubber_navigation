@@ -1,5 +1,4 @@
 <launch>
-    <include file="$(find sick_tim)/launch/sick_tim551_2050001.launch" />
     <node pkg="amcl" type="amcl" name="amcl" clear_params="true" output="screen">
         <param name="first_map_only" value="false"/>
         <param name="use_map_topic" value="true"/>

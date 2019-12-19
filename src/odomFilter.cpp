@@ -79,8 +79,8 @@ int main(int argc, char* argv[])
     ros::NodeHandle nh_private("~");
     std::string odom_frame;
     std::string base_foot_print;
-    nh_private.param("base_foot_print",base_foot_print,(std::string)"/base_link");
-    nh_private.param("odom_frame",odom_frame,(std::string)"/odom");
+    nh_private.param("base_foot_print",base_foot_print,(std::string)"base_link");
+    nh_private.param("odom_frame",odom_frame,(std::string)"odom");
 
     Odometry odometry(base_foot_print,odom_frame);
 
