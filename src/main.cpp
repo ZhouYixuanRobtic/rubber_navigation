@@ -45,14 +45,14 @@ private:
     void setBySignal();
     void setGoalInOrder();
 public:
-    RubberNav(std::string base_foot_print,std::string odom_frame,std::string map_frame);
+    RubberNav(std::string base_foot_print,std::string odom_frame,std::string map_frame,std::string serial_addr,bool publish_tf);
     ~RubberNav();
     void run();
 };
-RubberNav::RubberNav(std::string base_foot_print,std::string odom_frame,std::string map_frame)
+RubberNav::RubberNav(std::string base_foot_print,std::string odom_frame,std::string map_frame,std::string serial_addr,bool publish_tf)
 {
-    navCore = new NavCore(base_foot_print,map_frame);
-    baseController = new BaseController("/dev/ttyUSB0",B115200,base_foot_print,odom_frame);
+    navCore = new NavCore(std::move(base_foot_print),std::move(map_frame));
+    baseController = new BaseController(std::move(serial_addr),B115200,std::move(base_foot_print),std::move(odom_frame),publish_tf);
     serviceCaller = new visual_servo_namespace::ServiceCaller;
     parameterListener = new ParameterListener(40,8);
     joyTeleop = new JOYTELEOP::JoyTeleop("joy");
@@ -171,7 +171,7 @@ void RubberNav::setBySignal()
 }
 void RubberNav::setGoalInOrder()
 {
-    if(nav_on && targetPoseArray.empty()&&newGoal)
+    if(nav_on && !targetPoseArray.empty()&&newGoal)
     {
         if(iter != targetPoseArray.end())
         {
@@ -292,17 +292,20 @@ int main(int argc, char* argv[])
     ros::Rate loop_rate(60);
 
 
-    std::string base_foot_print,odom_frame,map_frame;
+    std::string base_foot_print,odom_frame,map_frame,serial_addr;
+    bool publish_tf;
     nh_.param("base_foot_print",base_foot_print,(std::string)"/base_link");
     nh_.param("odom_frame",odom_frame,(std::string)"/odom");
     nh_.param("map_frame",map_frame,(std::string)"/map");
+    nh_.param("serial_addr",serial_addr,(std::string)"/dev/ttyS0");
+    nh_.param("publish_tf",publish_tf,(bool)false);
 
     ros::AsyncSpinner spinner(5);
     spinner.start();
 
     JOYTELEOP::JoyTeleop joyTeleop("joy");
 
-    RubberNav rubberNav(base_foot_print,odom_frame,map_frame);
+    RubberNav rubberNav(base_foot_print,odom_frame,map_frame,serial_addr,publish_tf);
 
     while(ros::ok())
     {

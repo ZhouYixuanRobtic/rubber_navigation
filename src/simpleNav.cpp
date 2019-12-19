@@ -44,17 +44,22 @@ int main(int argc, char* argv[])
     ros::Rate loop_rate(60);
 
     const std::string parameter_addr{ros::package::getPath("rubber_navigation")+"/config/BaseModel.yaml"};
-    std::string base_foot_print,odom_frame,map_frame;
-    nh_.param("base_foot_print",base_foot_print,(std::string)"/base_link");
-    nh_.param("odom_frame",odom_frame,(std::string)"/odom");
-    nh_.param("map_frame",map_frame,(std::string)"/map");
+    std::string base_foot_print,odom_frame,map_frame,serial_addr;
+    bool publish_tf;
 
-    ros::AsyncSpinner spinner(3);
+    nh_.param("base_foot_print",base_foot_print,(std::string)"base_link");
+    nh_.param("odom_frame",odom_frame,(std::string)"odom");
+    nh_.param("map_frame",map_frame,(std::string)"map");
+    nh_.param("publish_tf",publish_tf,(bool)false);
+    nh_.param("serial_addr",serial_addr,(std::string)"/dev/ttyS0");
+
+    ros::AsyncSpinner spinner(4);
     spinner.start();
 
-    NavCore navCore(base_foot_print,map_frame);
-    BaseController baseController("/dev/ttyUSB0",B115200,base_foot_print,odom_frame);
+    BaseController baseController(serial_addr,B115200,base_foot_print,odom_frame,publish_tf);
     baseController.setBaseModel(parameter_addr);
+
+    NavCore navCore(base_foot_print,map_frame);
 
     JOYTELEOP::JoyTeleop joyTeleop("joy");
 
@@ -101,8 +106,8 @@ int main(int argc, char* argv[])
             }
             case NavCore::ABORTED:
             {
-                //iter++;
-                //newGoal=true;
+                iter++;
+                newGoal=true;
                 ROS_ERROR_STREAM("ROBOT ABORTED ");
                 break;
             }
@@ -111,7 +116,7 @@ int main(int argc, char* argv[])
         }
 
 
-        if(nav_on && targetPoseArray.empty()&&newGoal)
+        if(nav_on && !targetPoseArray.empty()&&newGoal)
         {
             if(iter != targetPoseArray.end())
             {

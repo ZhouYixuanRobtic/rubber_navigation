@@ -1,13 +1,13 @@
 
 #include "rubber_navigation/BaseController.h"
 
-BaseController::BaseController(std::string serial_addr, unsigned int baudrate,std::string base_foot_print,std::string odom_frame):BASE_FOOT_PRINT_(std::move(base_foot_print)),ODOM_FRAME_(std::move(odom_frame))
+BaseController::BaseController(std::string serial_addr, unsigned int baudrate,std::string base_foot_print,std::string odom_frame,bool publish_tf):BASE_FOOT_PRINT_(std::move(base_foot_print)),ODOM_FRAME_(std::move(odom_frame)),publish_tf_(publish_tf)
 {
     serialManager = new NaviSerialManager(serial_addr,baudrate);
     if(serialManager->openSerial())
     {
         serialManager->registerAutoReadThread(TIMER_SPAN_RATE_);
-        encoder_start=ros::WallTime::now();
+        encoder_start=ros::Time::now();
 
         wheel_status_pub = nh_.advertise<rubber_navigation::WheelStatus>("/wheel_status",100);
         odom_raw_pub = nh_.advertise<nav_msgs::Odometry>("/odom_raw",100);
@@ -15,9 +15,9 @@ BaseController::BaseController(std::string serial_addr, unsigned int baudrate,st
         joy_vel_sub = nh_.subscribe("cmd_vel",100,&BaseController::cmd_velCallback,this);
         init_send_msgs();
 
-        timer_ = nh_.createWallTimer(ros::WallDuration(1.0 / TIMER_SPAN_RATE_),&BaseController::timerCallback,this);
+        timer_ = nh_.createTimer(ros::Duration(1.0 / TIMER_SPAN_RATE_),&BaseController::timerCallback,this);
         timer_.start();
-        odom_publish_timer_ = nh_.createWallTimer(ros::WallDuration(1.0/ODOM_TIMER_SPAN_RATE_),&BaseController::odom_publish_timer_callback,this);
+        odom_publish_timer_ = nh_.createTimer(ros::Duration(1.0/ODOM_TIMER_SPAN_RATE_),&BaseController::odom_publish_timer_callback,this);
         odom_publish_timer_.start();
         ROS_INFO_STREAM("BASE READY!!!");
     }
@@ -44,13 +44,13 @@ void BaseController::init_send_msgs()
 void BaseController::odom_parsing()
 {
     static int right_encoder_pre{ENCODER_.right_encoder},left_encoder_pre{ENCODER_.left_encoder};
-    static ros::WallTime last_time{ros::WallTime::now()};
+    static ros::Time last_time{ros::Time::now()};
 
     int right_delta{ENCODER_.right_encoder - right_encoder_pre};
     int left_delta{ENCODER_.left_encoder - left_encoder_pre};
 
 
-    double dt = (ros::WallTime::now()-last_time).toSec();
+    double dt = (ros::Time::now()-last_time).toSec();
     double right_distance{},left_distance{};
     double theta{};
 
@@ -64,7 +64,7 @@ void BaseController::odom_parsing()
         //update value
         right_encoder_pre = ENCODER_.right_encoder;
         left_encoder_pre = ENCODER_.left_encoder;
-        last_time = ros::WallTime::now();
+        last_time = ros::Time::now();
         return;
     }
 
@@ -77,7 +77,7 @@ void BaseController::odom_parsing()
 
         right_encoder_pre = ENCODER_.right_encoder;
         left_encoder_pre = ENCODER_.left_encoder;
-        last_time = ros::WallTime::now();
+        last_time = ros::Time::now();
         return ;
     }
     right_distance = M_PI * BASE_MODEL_.Wheel_Diameter * right_delta / BASE_MODEL_.Encoder_to_Distance;//mm
@@ -120,12 +120,10 @@ void BaseController::odom_parsing()
     //update value
     right_encoder_pre = ENCODER_.right_encoder;
     left_encoder_pre = ENCODER_.left_encoder;
-    last_time = ros::WallTime::now();
-
+    last_time = ros::Time::now();
 }
 int BaseController::parsingMsg()
 {
-    static bool right_updated{},left_updated{};
     if(0x35!=message_[0])
     {
         memset(message_,0,COMMAND_SIZE);
@@ -142,7 +140,6 @@ int BaseController::parsingMsg()
                 /*poistion of right wheel*/
                 if(0x13==message_[2])
                 {
-                    encoder_after = ros::WallTime::now();
                     //right encodisk parsing
                     char* pchar = (char*)&ENCODER_.right_encoder;
                     *(pchar+3) = message_[3];
@@ -153,14 +150,13 @@ int BaseController::parsingMsg()
                     if (INT_MIN + 1000 <= ENCODER_.right_encoder <= INT_MAX - 1000) {} else ENCODER_.right_encoder = 0;
                     //make sure the consistency of left and right
                     right_updated= true;
+                    encoder_after = ros::Time::now();
                 }
                 break;
             case 0x11:
                 /*position of left wheel*/
                 if(0x13==message_[2])
                 {
-                    encoder_after = ros::WallTime::now();
-
                     char* pchar = (char*)&ENCODER_.left_encoder;
                     *(pchar+3) = message_[3];
                     *(pchar+2) = message_[4];
@@ -172,6 +168,7 @@ int BaseController::parsingMsg()
                     if (INT_MIN + 1000 <= ENCODER_.left_encoder <= INT_MAX - 1000) {} else ENCODER_.left_encoder = 0;
                     //make sure the consistency of left and right
                     left_updated=true;
+                    encoder_after = ros::Time::now();
                 }
                 break;
             case 0x32:
@@ -191,16 +188,9 @@ int BaseController::parsingMsg()
                 break;
         }
     }
-    if(right_updated&&left_updated)
-    {
-        odom_parsing();
-        right_updated=false;
-        left_updated=false;
-        return 1;
-    }
     return 0;
 }
-void BaseController::timerCallback(const ros::WallTimerEvent &e)
+void BaseController::timerCallback(const ros::TimerEvent &e)
 {
 
     //try to get encodere data
@@ -212,7 +202,7 @@ void BaseController::timerCallback(const ros::WallTimerEvent &e)
     }
     NaviSerialManager::ReadResult self_results{serialManager->getReadResult()};
 
-    encoder_pre = ros::WallTime::now();
+    encoder_pre = encoder_after;
     if(self_results.read_bytes>=COMMAND_SIZE)
     {
         for(int i=0;i<self_results.read_bytes;i+=COMMAND_SIZE)
@@ -228,6 +218,12 @@ void BaseController::timerCallback(const ros::WallTimerEvent &e)
             parsingMsg();
             ENCODER_.interval=(encoder_after-encoder_pre).toSec();
         }
+        if(right_updated&&left_updated)
+        {
+            odom_parsing();
+            right_updated=false;
+            left_updated=false;
+        }
     }
     else
         memset(message_, 0, COMMAND_SIZE);
@@ -237,14 +233,14 @@ void BaseController::timerCallback(const ros::WallTimerEvent &e)
         if(ENCODER_.interval>1.0||ENCODER_.interval<0.0)
         {
             if(!ENCODER_.encoderWrong)
-                encoder_stop=ros::WallTime::now();
+                encoder_stop=ros::Time::now();
             ENCODER_.encoderWrong=true;
         }
         else
         {
             if(ENCODER_.encoderWrong)
             {
-                if((encoder_pre-encoder_stop).toSec()>=3.0)
+                if((encoder_pre-encoder_stop).toSec()>=2.0)
                     ENCODER_.encoderWrong=false;
             }
         }
@@ -256,19 +252,20 @@ void BaseController::timerCallback(const ros::WallTimerEvent &e)
         wheel_status_pub.publish(wheelStatus);
     }
 }
-void BaseController::odom_publish_timer_callback(const ros::WallTimerEvent &e)
+void BaseController::odom_publish_timer_callback(const ros::TimerEvent &e)
 {
     nav_msgs::Odometry odom;
+    geometry_msgs::TransformStamped odom_trans;
     geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(global_theta);
 
-    odom.header.stamp = ros::Time::now();
-    odom.header.frame_id = ODOM_FRAME_;
-    odom.child_frame_id = BASE_FOOT_PRINT_;
+    odom.header.stamp = odom_trans.header.stamp = ros::Time::now();
+    odom.header.frame_id = odom_trans.header.frame_id = ODOM_FRAME_;
+    odom.child_frame_id = odom_trans.child_frame_id = BASE_FOOT_PRINT_;
 
-    odom.pose.pose.position.x = global_x;
-    odom.pose.pose.position.y = global_y;
-    odom.pose.pose.position.z = 0.0;
-    odom.pose.pose.orientation = odom_quat;
+    odom.pose.pose.position.x = odom_trans.transform.translation.x =global_x;
+    odom.pose.pose.position.y = odom_trans.transform.translation.y =global_y;
+    odom.pose.pose.position.z = odom_trans.transform.translation.z =0.0;
+    odom.pose.pose.orientation = odom_trans.transform.rotation = odom_quat;
 
     odom.pose.covariance=	{1e-3,0,0,0,0,0,
                               0,1e-3,0,0,0,0,
@@ -292,6 +289,9 @@ void BaseController::odom_publish_timer_callback(const ros::WallTimerEvent &e)
                            0,0,0,0,0,1e3};
 
     odom_raw_pub.publish(odom);
+
+    if(publish_tf_)
+        broad_caster.sendTransform(odom_trans);
 }
 void BaseController::cmd_velCallback(const geometry_msgs::TwistConstPtr  &msg)
 {
@@ -306,30 +306,21 @@ void BaseController::cmd_velCallback(const geometry_msgs::TwistConstPtr  &msg)
     if(linear_velocity == 0)
     {
         right_vel = angular_velocity * BASE_MODEL_.Wheel_Base/2000.0; //m
-        left_vel  = -user_cmd_vel.cmd_right;
+        left_vel  = -right_vel;
     }
     else if(angular_velocity == 0)
         right_vel = left_vel = linear_velocity;
     else
     {
-        right_vel  = linear_velocity - angular_velocity*BASE_MODEL_.Wheel_Base/2000.0; //m
-        left_vel   = linear_velocity + angular_velocity*BASE_MODEL_.Wheel_Base/2000.0; //m
+        right_vel  = linear_velocity + angular_velocity*BASE_MODEL_.Wheel_Base/2000.0; //m
+        left_vel   = linear_velocity - angular_velocity*BASE_MODEL_.Wheel_Base/2000.0; //m
     }
     user_cmd_vel.cmd_right = right_vel*60.0/(M_PI * BASE_MODEL_.Wheel_Diameter/1000.0);
     user_cmd_vel.cmd_left  = left_vel *60.0/(M_PI * BASE_MODEL_.Wheel_Diameter/1000.0);
 
-    //if always the same velocity, send frequency decrease by three times
-    static int same_no_zero_vel_counter;
-    if((linear_velocity!=0||angular_velocity!=0) && vel[5] == -user_cmd_vel.cmd_left && vel[6] == user_cmd_vel.cmd_right )
-        same_no_zero_vel_counter++;
+    cmd_vel_received_ = linear_velocity!=0||angular_velocity!=0 ;
 
-    //only send changed(may zero) or same no zero vel(decrease by three times)
-    if(vel[5] != -user_cmd_vel.cmd_left || vel[6]!= user_cmd_vel.cmd_right || same_no_zero_vel_counter >= 3)
-    {
-        sendVelocity(user_cmd_vel);
-        same_no_zero_vel_counter = 0;
-    }
-
+    sendVelocity(user_cmd_vel);
 }
 void BaseController::joy_velCallback(const geometry_msgs::TwistConstPtr  &msg)
 {
@@ -340,35 +331,23 @@ void BaseController::joy_velCallback(const geometry_msgs::TwistConstPtr  &msg)
     if(linear_velocity == 0)
     {
         right_vel = angular_velocity * BASE_MODEL_.Wheel_Base/2000.0; //m
-        left_vel  = -user_cmd_vel.cmd_right;
+        left_vel  = -right_vel;
     }
     else if(angular_velocity == 0)
         right_vel = left_vel = linear_velocity;
     else
     {
-        right_vel  = linear_velocity - angular_velocity*BASE_MODEL_.Wheel_Base/2000.0; //m
+        right_vel  = linear_velocity + angular_velocity*BASE_MODEL_.Wheel_Base/2000.0; //m
         left_vel   = linear_velocity + angular_velocity*BASE_MODEL_.Wheel_Base/2000.0; //m
     }
     user_cmd_vel.cmd_right = right_vel*60.0/(M_PI * BASE_MODEL_.Wheel_Diameter/1000.0);
     user_cmd_vel.cmd_left  = left_vel *60.0/(M_PI * BASE_MODEL_.Wheel_Diameter/1000.0);
 
-    static int same_no_zero_vel_counter;
-    if(linear_velocity!=0||angular_velocity!=0)
-    {
-        joy_vel_received_ = true;
-        //if always the same velocity, decrease by three times
-        if(vel[5] == -user_cmd_vel.cmd_left && vel[6] == user_cmd_vel.cmd_right )
-            same_no_zero_vel_counter++;
-    }
-    else
-        joy_vel_received_=false;
+    joy_vel_received_ = linear_velocity!=0||angular_velocity!=0 ;
 
-    //only send changed(may zero) or same no zero vel(decrease by three times)
-    if(vel[5] != -user_cmd_vel.cmd_left || vel[6]!= user_cmd_vel.cmd_right || same_no_zero_vel_counter >= 3)
-    {
-        sendVelocity(user_cmd_vel);
-        same_no_zero_vel_counter = 0;
-    }
+    //when there is no-zero cmd velocity, do not send zero joy velocity
+    if(!cmd_vel_received_||joy_vel_received_)
+           sendVelocity(user_cmd_vel);
 
 }
 void BaseController::sendCommand(enum BaseController::Command user_command )

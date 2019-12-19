@@ -9,12 +9,16 @@ int main(int argc,char* argv[])
 {
     ros::init(argc,argv,"baseOnly");
     ros::NodeHandle nh_("~");
-    std::string base_foot_print,odom_frame,map_frame;
-    nh_.param("base_foot_print",base_foot_print,(std::string)"/base_link");
-    nh_.param("odom_frame",odom_frame,(std::string)"/odom");
     const std::string parameter_addr{ros::package::getPath("rubber_navigation")+"/config/BaseModel.yaml"};
+    std::string base_foot_print,odom_frame,map_frame,serial_addr;
+    bool publish_tf;
 
-    BaseController baseController("/dev/ttyUSB0",B115200,base_foot_print,odom_frame);
+    nh_.param("publish_tf",publish_tf,(bool)false);
+    nh_.param("base_foot_print",base_foot_print,(std::string)"base_link");
+    nh_.param("odom_frame",odom_frame,(std::string)"odom");
+    nh_.param("serial_addr",serial_addr,(std::string)"/dev/ttyS0");
+
+    BaseController baseController(serial_addr,B115200,base_foot_print,odom_frame,publish_tf);
     baseController.setBaseModel(parameter_addr);
 
     ros::AsyncSpinner spinner(3);

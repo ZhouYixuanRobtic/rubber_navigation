@@ -8,8 +8,10 @@ NavCore::NavCore(std::string base_foot_print,std::string map_frame):BASE_FOOT_PR
     {
         usleep(500000);
     }
-    ROS_ERROR_STREAM("MoveBase ActionServer Failed.");
-
+    if(!moveBaseClient->isServerConnected())
+        ROS_ERROR_STREAM("MoveBase ActionServer Failed");
+    else
+        ROS_INFO_STREAM("MoveBase ActionServer Connected");
     action_result_sub = nh.subscribe("/move_base/result", 10, &NavCore::actionResultCallback,this);
 }
 NavCore::~NavCore()

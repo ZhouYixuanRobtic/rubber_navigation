@@ -30,6 +30,8 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_geometry_msgs
   visual_servo
   tf2_ros
+  roslib
+  tf
 )
 
 find_package(PkgConfig REQUIRED)
