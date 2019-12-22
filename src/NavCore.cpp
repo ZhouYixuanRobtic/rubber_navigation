@@ -8,16 +8,14 @@ NavCore::NavCore(std::string base_foot_print,std::string map_frame):BASE_FOOT_PR
     {
         usleep(500000);
     }
-    if(!moveBaseClient->isServerConnected())
+    if(!(isMoveBaseClientConnected = moveBaseClient->isServerConnected()))
         ROS_ERROR_STREAM("MoveBase ActionServer Failed");
     else
     {
         ROS_INFO_STREAM("MoveBase ActionServer Connected");
-        client =nh.serviceClient<std_srvs::Empty>("clear_costmaps");
     }
-
+    client =nh.serviceClient<std_srvs::Empty>("clear_costmaps");
     action_result_sub = nh.subscribe("/move_base/result", 10, &NavCore::actionResultCallback,this);
-
 }
 NavCore::~NavCore()
 {
@@ -107,5 +105,5 @@ void NavCore::cancelAllGoals()
 }
 bool NavCore::clearCostMap()
 {
-    return client.call(clear_costmap_srv_);
+    client.call(clear_costmap_srv_);
 }
