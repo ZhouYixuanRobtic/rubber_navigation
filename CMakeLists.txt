@@ -31,6 +31,7 @@ find_package(catkin REQUIRED COMPONENTS
   visual_servo
   tf2_ros
   roslib
+  std_srvs
   tf
 )
 
