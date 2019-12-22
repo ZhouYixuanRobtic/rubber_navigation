@@ -14,7 +14,8 @@ SerialManager::SerialManager(const SerialManager & serialManager):SERIAL_ADDR_(s
 }
 SerialManager::~SerialManager()
 {
-    close(m_dFd);
+    if(isOpen_)
+        close(m_dFd);
 }
 bool SerialManager::openSerial()
 {

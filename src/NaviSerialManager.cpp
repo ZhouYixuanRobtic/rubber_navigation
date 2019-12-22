@@ -13,12 +13,16 @@ NaviSerialManager::NaviSerialManager(const SerialManager & serialManager):Serial
 }
 NaviSerialManager::~NaviSerialManager()
 {
-    thread_ptr_->interrupt();
-    thread_ptr_->join();
+    if(isThreadRegistered)
+    {
+        thread_ptr_->interrupt();
+        thread_ptr_->join();
+    }
 }
 void NaviSerialManager::registerAutoReadThread(int rate)
 {
     thread_ptr_.reset(new boost::thread(boost::bind(&NaviSerialManager::readWorker, this, rate)));
+    isThreadRegistered=true;
 }
 void NaviSerialManager::readWorker(int rate)
 {

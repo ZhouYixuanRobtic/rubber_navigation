@@ -20,6 +20,7 @@ private:
     ReadResult read_results_;
     int read_used_bytes{};
     std::tr1::shared_ptr<boost::thread> thread_ptr_;
+    bool isThreadRegistered{};
     void readWorker(int rate);
 public:
     NaviSerialManager(std::string serial_addr, unsigned int baudrate);
