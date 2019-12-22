@@ -19,7 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib geometric_shapes geometry_msgs
   message_generation move_base_msgs nav_msgs
   roscpp rospy sensor_msgs std_msgs tf2_eigen tf2_geometry_msgs roslib
-  tf2_ros tf
+  tf2_ros tf std_srvs
 )
 
 find_package(PkgConfig REQUIRED)

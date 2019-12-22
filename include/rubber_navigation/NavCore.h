@@ -9,6 +9,8 @@
 #include "actionlib/client/simple_action_client.h"
 #include "move_base_msgs/MoveBaseAction.h"
 #include <move_base_msgs/MoveBaseGoal.h>
+#include "move_base/move_base.h"
+#include "std_srvs/Empty.h"
 
 #include <tf2_eigen/tf2_eigen.h>
 #include <tf2_ros/transform_listener.h>
@@ -52,6 +54,10 @@ private:
     MoveBaseActionResult moveBaseActionResult_;
     move_base_msgs::MoveBaseGoal goal_{};
 
+    std_srvs::Empty clear_costmap_srv_{};
+
+    ros::ServiceClient client;
+
     geometry_msgs::Pose2D current_pose_{};
     tf2_ros::Buffer tfBuffer_;
     tf2_ros::TransformListener *tfListener_;
@@ -65,6 +71,7 @@ public:
 
     ~NavCore();
 
+    bool clearCostMap();
 
     void cancelAllGoals();
 

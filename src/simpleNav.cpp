@@ -110,9 +110,15 @@ int main(int argc, char* argv[])
             }
             case NavCore::ABORTED:
             {
-                iter++;
-                newGoal=true;
                 ROS_ERROR_STREAM("ROBOT ABORTED ");
+                if(navCore.clearCostMap())
+                {
+                    iter++;
+                    newGoal=true;
+                }
+                else
+                    ROS_ERROR_STREAM("Failed to call clear cost map service");
+
                 break;
             }
             default:
