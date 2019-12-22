@@ -49,10 +49,9 @@ private:
     ros::NodeHandle nh;
     ros::Subscriber action_result_sub;
 
-    bool isMoveBaseClientConnected{};
-
+    bool isMoveBaseClientConnected_{};
     MoveBaseClient *moveBaseClient;
-    MoveBaseActionResult moveBaseActionResult_;
+    MoveBaseActionResult moveBaseActionResult_{EMPTY};
     move_base_msgs::MoveBaseGoal goal_{};
 
     std_srvs::Empty clear_costmap_srv_;
@@ -71,6 +70,7 @@ public:
 
     ~NavCore();
 
+    bool isMoveBaseClientConnected()const {return isMoveBaseClientConnected_;};
     bool clearCostMap();
     void cancelAllGoals();
 
