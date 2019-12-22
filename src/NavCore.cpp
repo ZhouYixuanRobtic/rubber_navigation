@@ -8,7 +8,7 @@ NavCore::NavCore(std::string base_foot_print,std::string map_frame):BASE_FOOT_PR
     {
         usleep(500000);
     }
-    if(!(isMoveBaseClientConnected = moveBaseClient->isServerConnected()))
+    if(!(isMoveBaseClientConnected_ = moveBaseClient->isServerConnected()))
         ROS_ERROR_STREAM("MoveBase ActionServer Failed");
     else
     {
