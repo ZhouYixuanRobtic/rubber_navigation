@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: rubber_navigation
+Description: Description of rubber_navigation
+Version: 0.0.0
+Cflags: -I/usr/local/include -I/usr/include/eigen3 -I/usr/include
+Libs: -L/usr/local/lib -lyaml-cpp /usr/lib/x86_64-linux-gnu/libboost_system.so /usr/lib/x86_64-linux-gnu/libboost_filesystem.so /usr/lib/x86_64-linux-gnu/libboost_date_time.so /usr/lib/x86_64-linux-gnu/libboost_thread.so -lpthread /usr/lib/x86_64-linux-gnu/libboost_chrono.so /usr/lib/x86_64-linux-gnu/libboost_atomic.so
+Requires: std_msgs sensor_msgs geometry_msgs roscpp tf nav_msgs visual_servo
