@@ -1,1 +1,0 @@
-set(ORDERED_PATHS "/home/xcy/WorkSpace/devel/lib;/opt/ros/kinetic/lib")
