@@ -18,6 +18,7 @@ using std::tr1::shared_ptr;
 
 class RubberNav{
 private:
+    ros::NodeHandle nh;
     struct targetPose{
         geometry_msgs::Pose2D pose;
         enum TargetAction{
@@ -36,9 +37,12 @@ private:
     JOYTELEOP::JoyTeleop * joyTeleop;
     ParameterListener* parameterListener;
 
+    ros::Subscriber vs_status_sub;
+
     std::vector<targetPose> targetPoseArray{};
     std::vector<targetPose>::iterator iter;
 
+    void checkSrvFinish();
     void getPoseArray();
     void statusCallback(const visual_servo::VisualServoMetaTypeMsg &msg);
     void processCommand();
@@ -57,6 +61,7 @@ RubberNav::RubberNav(std::string base_foot_print,std::string odom_frame,std::str
     parameterListener = new ParameterListener(40,8);
     joyTeleop = new JOYTELEOP::JoyTeleop("joy");
 
+    vs_status_sub = nh.subscribe("VisualServoStatus",100,&RubberNav::statusCallback,this);
     parameterListener->registerParameterCallback(parameterNames,false);
     const std::string parameter_addr{ros::package::getPath("rubber_navigation")+"/config/BaseModel.yaml"};
     baseController->setBaseModel(parameter_addr);
@@ -188,6 +193,23 @@ void RubberNav::setGoalInOrder()
         newGoal=false;
     }
 }
+void RubberNav::checkSrvFinish()
+{
+    if(serviceCaller->srvFinished())
+    {
+        visual_servo_namespace::printServiceStatus(serviceCaller->getSrvResponseStatus().status);
+        iter++;
+        newGoal=true;
+        if(serviceCaller->getSrvResponseStatus().status==visual_servo_namespace::SERVICE_STATUS_HOME_FAILED||serviceCaller->getSrvResponseStatus().status==visual_servo_namespace::SERVICE_STATUS_ROBOT_ABORT)
+        {
+            nav_on=false;
+            navCore->cancelAllGoals();
+            newGoal=false;
+        }
+    }
+    else
+        newGoal=false;
+}
 void RubberNav::run()
 {
     processCommand();
@@ -202,40 +224,12 @@ void RubberNav::run()
                 {
                     if(!serviceCaller->srvCalling())
                         serviceCaller->callSrv(visual_servo::manipulate::Request::CUT);
-                    if(serviceCaller->srvFinished())
-                    {
-                        visual_servo_namespace::printServiceStatus(serviceCaller->getSrvResponseStatus().status);
-                        iter++;
-                        newGoal=true;
-                        if(serviceCaller->getSrvResponseStatus().status==visual_servo_namespace::SERVICE_STATUS_HOME_FAILED||serviceCaller->getSrvResponseStatus().status==visual_servo_namespace::SERVICE_STATUS_ROBOT_ABORT)
-                        {
-                            nav_on=false;
-                            navCore->cancelAllGoals();
-                            newGoal=false;
-                        }
-                    }
-                    else
-                        newGoal=false;
                     break;
                 }
                 case targetPose::CHARGE:
                 {
                     if(!serviceCaller->srvCalling())
                         serviceCaller->callSrv(visual_servo::manipulate::Request::CHARGE);
-                    if(serviceCaller->srvFinished())
-                    {
-                        visual_servo_namespace::printServiceStatus(serviceCaller->getSrvResponseStatus().status);
-                        iter++;
-                        newGoal=true;
-                        if(serviceCaller->getSrvResponseStatus().status==visual_servo_namespace::SERVICE_STATUS_HOME_FAILED||serviceCaller->getSrvResponseStatus().status==visual_servo_namespace::SERVICE_STATUS_ROBOT_ABORT)
-                        {
-                            nav_on=false;
-                            navCore->cancelAllGoals();
-                            newGoal=false;
-                        }
-                    }
-                    else
-                        newGoal=false;
                     break;
                 }
                 case targetPose::NAV:
@@ -250,20 +244,6 @@ void RubberNav::run()
                     usleep(200000);
                     if(!serviceCaller->srvCalling())
                         serviceCaller->callSrv(visual_servo::manipulate::Request::HOME);
-                    if(serviceCaller->srvFinished())
-                    {
-                        visual_servo_namespace::printServiceStatus(serviceCaller->getSrvResponseStatus().status);
-                        iter++;
-                        newGoal=true;
-                        if(serviceCaller->getSrvResponseStatus().status!=visual_servo_namespace::SERVICE_STATUS_SUCCEED)
-                        {
-                            nav_on=false;
-                            navCore->cancelAllGoals();
-                            newGoal=false;
-                        }
-                    }
-                    else
-                        newGoal=false;
                     break;
                 }
                 default:
@@ -286,6 +266,7 @@ void RubberNav::run()
         default:
             break;
     }
+    checkSrvFinish();
     setGoalInOrder();
 }
 
@@ -308,8 +289,6 @@ int main(int argc, char* argv[])
 
     ros::AsyncSpinner spinner(5);
     spinner.start();
-
-    JOYTELEOP::JoyTeleop joyTeleop("joy");
 
     RubberNav rubberNav(base_foot_print,odom_frame,map_frame,serial_addr,publish_tf);
 

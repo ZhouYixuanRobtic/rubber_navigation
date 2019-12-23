@@ -171,8 +171,13 @@ int BaseController::parsingMsg()
                     encoder_after = ros::Time::now();
                 }
                 break;
-            case 0x32:
+            case 0x02:
                 /*preserved for knife move end*/
+                if(message_[2]==0x32)
+                {
+                    ros::param::set("/visual_servo/knifeMoveEnd",1.0);
+                    ROS_INFO_STREAM("Received knife move end");
+                }
                 break;
             case 0x13:
             {
