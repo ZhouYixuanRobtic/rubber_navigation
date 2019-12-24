@@ -7,7 +7,6 @@ BaseController::BaseController(std::string serial_addr, unsigned int baudrate,st
     if(serialManager->openSerial())
     {
         serialManager->registerAutoReadThread(TIMER_SPAN_RATE_);
-        encoder_start=ros::Time::now();
 
         wheel_status_pub = nh_.advertise<rubber_navigation::WheelStatus>("/wheel_status",100);
         odom_raw_pub = nh_.advertise<nav_msgs::Odometry>("/odom_raw",100);
@@ -80,6 +79,20 @@ void BaseController::odom_parsing()
         last_time = ros::Time::now();
         return ;
     }
+
+    //in case of EMERGENCY button pressed
+    if(ENCODER_.right_encoder==0&&ENCODER_.left_encoder==0&&right_encoder_pre!=0&&left_encoder_pre!=0)
+    {
+        //we hope to keep the same value of last time
+        //so just update value and return;
+
+        right_encoder_pre = ENCODER_.right_encoder;
+        left_encoder_pre = ENCODER_.left_encoder;
+        last_time = ros::Time::now();
+        return ;
+    }
+
+
     right_distance = M_PI * BASE_MODEL_.Wheel_Diameter * right_delta / BASE_MODEL_.Encoder_to_Distance;//mm
     left_distance  = M_PI * BASE_MODEL_.Wheel_Diameter * left_delta / BASE_MODEL_.Encoder_to_Distance;//mm
     theta = (right_distance-left_distance)/BASE_MODEL_.Wheel_Base;
@@ -147,7 +160,9 @@ int BaseController::parsingMsg()
                     *(pchar+1) = message_[5];
                     *(pchar+0) = message_[6];
 
-                    if (INT_MIN + 1000 <= ENCODER_.right_encoder <= INT_MAX - 1000) {} else ENCODER_.right_encoder = 0;
+                    if (std::abs(ENCODER_.right_encoder) > INT_MAX - 1000)
+                        ENCODER_.right_encoder = 0;
+
                     //make sure the consistency of left and right
                     right_updated= true;
                     encoder_after = ros::Time::now();
@@ -165,7 +180,9 @@ int BaseController::parsingMsg()
 
                     //按旧小车，向前进时，左轮码盘为负，要乘负一
                     ENCODER_.left_encoder *=-1;
-                    if (INT_MIN + 1000 <= ENCODER_.left_encoder <= INT_MAX - 1000) {} else ENCODER_.left_encoder = 0;
+
+                    if (std::abs(ENCODER_.left_encoder) > INT_MAX - 1000)
+                        ENCODER_.left_encoder = 0;
                     //make sure the consistency of left and right
                     left_updated=true;
                     encoder_after = ros::Time::now();
@@ -198,13 +215,12 @@ int BaseController::parsingMsg()
 void BaseController::timerCallback(const ros::TimerEvent &e)
 {
 
-    //try to get encodere data
+    //try to get encoder data
     sendCommand(GET_POSE);
     //keep consistency
     if(!serialManager->isSerialAlive())
-    {
         ROS_ERROR_STREAM("SERIAL WRONG!!!!!");
-    }
+
     NaviSerialManager::ReadResult self_results{serialManager->getReadResult()};
 
     encoder_pre = encoder_after;
@@ -232,20 +248,21 @@ void BaseController::timerCallback(const ros::TimerEvent &e)
     }
     else
         memset(message_, 0, COMMAND_SIZE);
-    //ignore 3 seconds after brought up;
-    if((encoder_pre-encoder_start).toSec()>3.0)
+    //publish the encoder when have.
+    if(ENCODER_.interval!=0)
     {
-        if(ENCODER_.interval>1.0||ENCODER_.interval<0.0)
+        if(ENCODER_.interval>5.0/TIMER_SPAN_RATE_||ENCODER_.interval<0.0)
         {
             if(!ENCODER_.encoderWrong)
                 encoder_stop=ros::Time::now();
             ENCODER_.encoderWrong=true;
+            ROS_ERROR_STREAM("Encoder once passed 5 frames");
         }
         else
         {
             if(ENCODER_.encoderWrong)
             {
-                if((encoder_pre-encoder_stop).toSec()>=2.0)
+                if((encoder_pre-encoder_stop).toSec()>=1.0)
                     ENCODER_.encoderWrong=false;
             }
         }

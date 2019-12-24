@@ -13,12 +13,16 @@ NaviSerialManager::NaviSerialManager(const SerialManager & serialManager):Serial
 }
 NaviSerialManager::~NaviSerialManager()
 {
-    thread_ptr_->interrupt();
-    thread_ptr_->join();
+    if(isAutoThreadRegistered_)
+    {
+        thread_ptr_->interrupt();
+        thread_ptr_->join();
+    }
 }
 void NaviSerialManager::registerAutoReadThread(int rate)
 {
     thread_ptr_.reset(new boost::thread(boost::bind(&NaviSerialManager::readWorker, this, rate)));
+    isAutoThreadRegistered_=true;
 }
 void NaviSerialManager::readWorker(int rate)
 {
@@ -55,7 +59,7 @@ void NaviSerialManager::receive()
             ReadResult temp{};
             for(int i=0;i<read_used_bytes;i+=COMMAND_SIZE)
             {
-                //WARNING, MAY IGNORE SOME DATA
+                //WARNING, MAY IGNORE SOME DATA WHEN ACCUMULATE DATA BEYOND RESULT SIZE
                 if(i<=RESULT_SIZE-COMMAND_SIZE)
                 {
                     memcpy(&temp.read_result[i], &read_buffer[i], COMMAND_SIZE);
@@ -66,6 +70,7 @@ void NaviSerialManager::receive()
             memset(read_buffer,0,BUFFER_SIZE);
             read_used_bytes = 0;
         }
+        //Warning, ignore some data when the STM32 send wrong many times
         if(read_used_bytes>=BUFFER_SIZE-COMMAND_SIZE)
         {
             read_used_bytes=0;

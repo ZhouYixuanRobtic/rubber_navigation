@@ -19,6 +19,7 @@ private:
     std::queue<ReadResult> read_result_queue{};
     ReadResult read_results_;
     int read_used_bytes{};
+    bool isAutoThreadRegistered_{};
     std::tr1::shared_ptr<boost::thread> thread_ptr_;
     void readWorker(int rate);
 public:

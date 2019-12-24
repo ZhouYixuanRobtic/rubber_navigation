@@ -7,7 +7,7 @@
 #include "geometry_msgs/Pose2D.h"
 #include <iostream>
 #include <fstream>
-#include "JoyTeleop.h"
+#include "../../Visual-Servo/include/visual_servo/JoyTeleop.h"
 using namespace JOYTELEOP;
 class GoalSaver{
 private:
@@ -19,6 +19,7 @@ private:
     tf2_ros::TransformListener *tfListener_;
 public:
     enum GoalType{
+        DEFAULT,
         CUT,
         CHARGE,
         NAVI,

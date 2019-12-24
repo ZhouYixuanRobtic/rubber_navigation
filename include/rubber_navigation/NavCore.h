@@ -78,7 +78,7 @@ public:
 
     MoveBaseActionResult getMoveBaseActionResult() { MoveBaseActionResult temp{moveBaseActionResult_}; moveBaseActionResult_=MoveBaseActionResult::EMPTY;return temp;};
 
-    const geometry_msgs::Pose2D &getCurrentPose(const std::string &source_frame, const std::string &target_frame);
+    const geometry_msgs::Pose2D &getCurrentPose(const std::string &target_frame, const std::string &source_frame);
 
     bool isGoalPassed(const geometry_msgs::Pose2D &goal_pose);
 };

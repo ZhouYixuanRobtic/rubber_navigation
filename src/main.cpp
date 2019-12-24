@@ -22,10 +22,11 @@ private:
     struct targetPose{
         geometry_msgs::Pose2D pose;
         enum TargetAction{
+            DEFAULT,
             TAP,
             CHARGE,
             NAV,
-            TURN
+            TURN,
         }targetAction{};
     };
     bool nav_on{},nav_pause{},newGoal{true};
@@ -55,8 +56,8 @@ public:
 };
 RubberNav::RubberNav(std::string base_foot_print,std::string odom_frame,std::string map_frame,std::string serial_addr,bool publish_tf)
 {
-    navCore = new NavCore(std::move(base_foot_print),std::move(map_frame));
     baseController = new BaseController(std::move(serial_addr),B115200,std::move(base_foot_print),std::move(odom_frame),publish_tf);
+    navCore = new NavCore(std::move(base_foot_print),std::move(map_frame));
     serviceCaller = new visual_servo_namespace::ServiceCaller;
     parameterListener = new ParameterListener(40,8);
     joyTeleop = new JOYTELEOP::JoyTeleop("joy");
@@ -73,16 +74,16 @@ RubberNav::~RubberNav()
     delete joyTeleop;
     delete parameterListener;
     delete serviceCaller;
-    delete baseController;
     delete navCore;
+    delete baseController;
 }
 void RubberNav::getPoseArray()
 {
     const std::string pose_addr{ros::package::getPath("rubber_navigation")+"/config/treeTarget.txt"};
     std::ifstream input_file(pose_addr.c_str());
-    targetPoseArray.clear();
     if(input_file.is_open())
     {
+        targetPoseArray.clear();
         std::string str;
         targetPose target_pose{};
         while(getline(input_file,str)&&!str.empty())
@@ -182,15 +183,16 @@ void RubberNav::setGoalInOrder()
         {
             ROS_INFO_STREAM("now goal: x is "<<(*iter).pose.x<<" y is "<<(*iter).pose.y<<" theata is "<<(*iter).pose.theta);
             navCore->setGoal((*iter).pose);
+            newGoal=false;
         }
         else
         {
             getPoseArray();
             iter = targetPoseArray.begin();
-            ROS_INFO("Reach the end of the goal list, reload ree target");
+            ROS_INFO("Reach the end of the goal list, reload tree target");
             nav_on=false;
+            newGoal=true;
         }
-        newGoal=false;
     }
 }
 void RubberNav::checkSrvFinish()

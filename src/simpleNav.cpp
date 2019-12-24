@@ -10,6 +10,7 @@
 struct targetPose{
     geometry_msgs::Pose2D pose;
     enum TargetAction{
+        DEFAULT,
         TAP,
         CHARGE,
         NAV,

@@ -21,7 +21,7 @@ int main(int argc,char* argv[])
     BaseController baseController(serial_addr,B115200,base_foot_print,odom_frame,publish_tf);
     baseController.setBaseModel(parameter_addr);
 
-    ros::AsyncSpinner spinner(3);
+    ros::AsyncSpinner spinner(2);
     spinner.start();
     ros::Rate loop_rate(30);
 
