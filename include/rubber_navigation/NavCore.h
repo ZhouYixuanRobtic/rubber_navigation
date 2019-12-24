@@ -9,7 +9,6 @@
 #include "actionlib/client/simple_action_client.h"
 #include "move_base_msgs/MoveBaseAction.h"
 #include <move_base_msgs/MoveBaseGoal.h>
-#include "move_base/move_base.h"
 #include "std_srvs/Empty.h"
 
 #include <tf2_eigen/tf2_eigen.h>
@@ -72,16 +71,15 @@ public:
 
     ~NavCore();
 
-    bool isMoveBaseClientConnected(){ return isMoveBaseClientConnected_;};
+    bool isMoveBaseClientConnected()const {return isMoveBaseClientConnected_;};
     bool clearCostMap();
-
     void cancelAllGoals();
 
     void setGoal(const geometry_msgs::Pose2D &goal2d);
 
     MoveBaseActionResult getMoveBaseActionResult() { MoveBaseActionResult temp{moveBaseActionResult_}; moveBaseActionResult_=MoveBaseActionResult::EMPTY;return temp;};
 
-    const geometry_msgs::Pose2D &getCurrentPose(const std::string &source_frame, const std::string &target_frame);
+    const geometry_msgs::Pose2D &getCurrentPose(const std::string &target_frame, const std::string &source_frame);
 
     bool isGoalPassed(const geometry_msgs::Pose2D &goal_pose);
 };

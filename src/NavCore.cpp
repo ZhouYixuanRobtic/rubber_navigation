@@ -11,9 +11,8 @@ NavCore::NavCore(std::string base_foot_print,std::string map_frame):BASE_FOOT_PR
     if(!(isMoveBaseClientConnected_ = moveBaseClient->isServerConnected()))
         ROS_ERROR_STREAM("MoveBase ActionServer Failed");
     else
-    {
         ROS_INFO_STREAM("MoveBase ActionServer Connected");
-    }
+
     client =nh.serviceClient<std_srvs::Empty>("clear_costmaps");
     action_result_sub = nh.subscribe("/move_base/result", 10, &NavCore::actionResultCallback,this);
 }
@@ -61,13 +60,13 @@ void NavCore::actionResultCallback(const move_base_msgs::MoveBaseActionResult &m
             break;
     }
 }
-const geometry_msgs::Pose2D & NavCore::getCurrentPose(const std::string &source_frame, const std::string &target_frame)
+const geometry_msgs::Pose2D & NavCore::getCurrentPose(const std::string &target_frame, const std::string &source_frame)
 {
     geometry_msgs::TransformStamped transformStamped{};
     try
     {
-        transformStamped = tfBuffer_.lookupTransform(source_frame, target_frame,
-                                                     ros::Time(0),ros::Duration(3.0));
+        transformStamped = tfBuffer_.lookupTransform(target_frame, source_frame,
+                                                     ros::Time(0), ros::Duration(3.0));
     }
     catch (tf2::TransformException &ex)
     {
@@ -105,5 +104,5 @@ void NavCore::cancelAllGoals()
 }
 bool NavCore::clearCostMap()
 {
-    client.call(clear_costmap_srv_);
+        return client.call(clear_costmap_srv_);
 }

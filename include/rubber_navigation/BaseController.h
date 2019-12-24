@@ -102,7 +102,7 @@ private:
     ros::Timer timer_;
     ros::Timer odom_publish_timer_;
 
-    ros::Time encoder_pre{},encoder_after{},encoder_start{},encoder_stop{};
+    ros::Time encoder_pre{},encoder_after{},encoder_stop{};
 
     double linear_velocity_{},angular_velocity_{};
     double global_x{0.0},global_y{0.0},global_theta{0.0};

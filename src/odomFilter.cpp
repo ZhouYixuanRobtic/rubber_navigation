@@ -53,8 +53,8 @@ void Odometry::poseCombined_callback(const geometry_msgs::PoseWithCovarianceStam
     geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(gth);
 
     odom.header.stamp = ros::Time::now();
-    odom.header.frame_id = "odom";
-    odom.child_frame_id = "base_link";
+    odom.header.frame_id = ODOM_FRAME_;
+    odom.child_frame_id = BASE_FOOT_PRINT_;
 
     odom.pose.pose.position.x = gx;
     odom.pose.pose.position.y = gy;
