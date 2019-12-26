@@ -20,6 +20,7 @@ private:
     ReadResult read_results_;
     int read_used_bytes{};
     bool isAutoThreadRegistered_{};
+    std::mutex queue_mutex_{};
     std::tr1::shared_ptr<boost::thread> thread_ptr_;
     void readWorker(int rate);
 public:
@@ -32,8 +33,10 @@ public:
     {
         if(!read_result_queue.empty())
         {
+            queue_mutex_.lock();
             read_results_ = read_result_queue.front();
             read_result_queue.pop();
+            queue_mutex_.unlock();
         }
         else
             memset(&read_results_,0, sizeof(ReadResult));

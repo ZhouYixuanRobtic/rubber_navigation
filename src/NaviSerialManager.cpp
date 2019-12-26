@@ -66,7 +66,9 @@ void NaviSerialManager::receive()
                     temp.read_bytes += COMMAND_SIZE;
                 }
             }
+            queue_mutex_.lock();
             read_result_queue.push(temp);
+            queue_mutex_.unlock();
             memset(read_buffer,0,BUFFER_SIZE);
             read_used_bytes = 0;
         }
