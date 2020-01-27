@@ -116,7 +116,7 @@ add_executable(odomFilter src/odomFilter.cpp)
 target_link_libraries(odomFilter ${catkin_LIBRARIES})
 
 add_executable(baseOnly src/BaseOnly.cpp)
-target_link_libraries(baseOnly ${catkin_LIBRARIES} BaseController)
+target_link_libraries(baseOnly ${catkin_LIBRARIES} BaseController parameterTeleop)
 
 add_executable(simpleNav src/simpleNav.cpp)
 target_link_libraries(simpleNav ${catkin_LIBRARIES} BaseController NavCore ${Boost_LIBRARIES})

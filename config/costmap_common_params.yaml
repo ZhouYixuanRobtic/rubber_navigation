@@ -5,8 +5,8 @@
 #History:
 # 20190417: Initial this file.
 
-footprint: [[-0.45,-0.32],[-0.45,0.32],[0.45,0.32],[0.45,-0.32]]
-
+#footprint: [[-0.45,-0.32],[-0.45,0.32],[0.45,0.32],[0.45,-0.32]]
+robot_radius: 0.325
 #footprint: [[0,-0.35],[0,0.35],[-0.7,0.35],[-0.7,-0.35]]
 obstacle_layer: 
   enabled: true
@@ -14,30 +14,30 @@ obstacle_layer:
   track_unknown_space: true
   obstacle_range: 2.5
   raytrace_range: 3.5
-#  observation_sources: laser
-#  laser: {
-# sensor_frame: laser,
-# data_type: LaserScan, 
-# topic: /scan2, 
-# marking: true, 
-# clearing: true, 
-#  }
-  observation_sources: velodyne
-  velodyne: {
- sensor_frame: velodyne,
- data_type: PointCloud2, 
- topic: velodyne_points, # scan_matched_points2  velodyne_points
- marking: true, 
- clearing: true, 
- min_obstacle_height: 0.11,
- max_obstacle_height: 0.6,
- inf_is_valid: false,
+  observation_sources: laser
+  laser: {
+sensor_frame: velodyne,
+data_type: LaserScan,
+topic: scan,
+marking: true,
+clearing: true,
   }
- 
+#  observation_sources: velodyne
+#  velodyne: {
+# sensor_frame: velodyne,
+# data_type: PointCloud2,
+# topic: velodyne_points, # scan_matched_points2  velodyne_points
+# marking: true,
+# clearing: true,
+# min_obstacle_height: 0.11,
+# max_obstacle_height: 0.6,
+# inf_is_valid: false,
+#  }
+
 inflation_layer: 
   enabled: true
   cost_scaling_factor: 2.58
-  inflation_radius: 0.50
+  inflation_radius: 0.5
  
 static_layer: 
   enabled: true

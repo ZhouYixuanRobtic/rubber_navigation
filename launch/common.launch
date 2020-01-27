@@ -6,7 +6,9 @@
 
     <!-- when publishing robot source odom tf, do not use odom ekf-->
     <group unless="$(arg publish_robot_source_odom_tf)">
-
+		<param name="robot_description" command="xacro --inorder  '$(find aubo_gazebo)/urdf/aubo_i5.xacro'"/>
+		<node name="navi_robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+		<include file="$(find imu_interface_broadcaster)/launch/imu.launch"/>
         <node pkg="robot_pose_ekf" type="robot_pose_ekf" name="robot_pose_ekf" output="screen">
             <param name="base_footprint_frame" value="base_link"/>
             <param name="output_frame" value="odom"/>
@@ -18,8 +20,8 @@
             <param name="debug" value="false"/>
             <param name="self_diagnose" value="false"/>
             <remap from="odom" to="odom_raw"/>
-            <remap from="imu_data" to="/imu/data_raw"/>
-            <!--remap from="tf" to="tf_no_odom"/-->
+            <remap from="imu_data" to="imu/data_raw"/>
+            <remap from="tf" to="tf_no_odom"/>
         </node>
 
         <node pkg="rubber_navigation" type="odomFilter" name="odomFilter">

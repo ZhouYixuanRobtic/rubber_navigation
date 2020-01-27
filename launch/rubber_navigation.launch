@@ -2,9 +2,7 @@
 
     <arg name="publish_robot_source_odom_tf" default="false"/>
 
-    <include file ="$(find cartographer_ros)/launch/demo_velodyne2d_localization.launch">
-        <arg name="load_state_filename" value="$(find rubber_navigation)/config/map/map.bag.pbstream"/>
-    </include>
+    <include file ="$(find cartographer_ros)/launch/demo_velodyne2d_localization.launch"/>
 
     <!--move_base-->
     <include file="$(find rubber_navigation)/launch/move_base.launch"/>
@@ -17,16 +15,17 @@
     <node name="goalSaver" pkg="rubber_navigation" type="goalSaver" required="true">
         <param name="map_frame" value="map"/>
         <param name="base_footprint_frame" value="base_link"/>
-        <param name="file_name" value="$(find rubber_navigation)/config/treeTarget.txt"/>
+        <param name="file_name" value="$(find rubber_navigation)/config/debugTreeTarget.txt"/>
     </node>
     <!-- map related-->
-    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find rubber_navigation)/config/rviz/amcl.rviz"/>
+    <!--node name="rviz" pkg="rviz" type="rviz" args="-d $(find rubber_navigation)/config/rviz/amcl.rviz"/-->
 
-    <node name="rubber_navigation" pkg="rubber_navigation" type="rubber_navigation" output="screen" required="true">
+    <node name="rubber_navigation" pkg="rubber_navigation" type="rubber_navigation" output="screen">
+		<param name="map_frame" value="map"/>
         <param name="base_foot_print" value="base_link"/>
         <param name="odom_frame" value="odom"/>
         <param name="publish_tf" value="$(arg publish_robot_source_odom_tf)"/>
-        <param name="serial_addr" value="/dev/ttyUSB0"/>
+        <param name="serial_addr" value="/dev/ttyS1"/>
     </node>
 
 </launch>

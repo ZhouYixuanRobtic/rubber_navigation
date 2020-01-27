@@ -360,7 +360,7 @@ void BaseController::joy_velCallback(const geometry_msgs::TwistConstPtr  &msg)
     else
     {
         right_vel  = linear_velocity + angular_velocity*BASE_MODEL_.Wheel_Base/2000.0; //m
-        left_vel   = linear_velocity + angular_velocity*BASE_MODEL_.Wheel_Base/2000.0; //m
+        left_vel   = linear_velocity -angular_velocity*BASE_MODEL_.Wheel_Base/2000.0; //m
     }
     user_cmd_vel.cmd_right = right_vel*60.0/(M_PI * BASE_MODEL_.Wheel_Diameter/1000.0);
     user_cmd_vel.cmd_left  = left_vel *60.0/(M_PI * BASE_MODEL_.Wheel_Diameter/1000.0);
@@ -406,6 +406,15 @@ void BaseController::sendCommand(enum BaseController::Command user_command )
         case GET_POSE:
             serialManager->send(get_pos,COMMAND_SIZE);
             break;
+		case SINGLE_CLOCK_GO:
+			serialManager->send(singleClockGo,COMMAND_SIZE);
+			break;
+		case SINGLE_ANTI_CLOCK_GO:
+			serialManager->send(singleAntiClockGo,COMMAND_SIZE);
+			break;
+		case KNIFE_UNPLUG:
+			serialManager->send(knifeUnplug,COMMAND_SIZE);
+			break;
         default:
             break;
     }

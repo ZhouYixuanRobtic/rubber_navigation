@@ -56,12 +56,11 @@ public:
 };
 RubberNav::RubberNav(std::string base_foot_print,std::string odom_frame,std::string map_frame,std::string serial_addr,bool publish_tf)
 {
-    baseController = new BaseController(std::move(serial_addr),B115200,std::move(base_foot_print),std::move(odom_frame),publish_tf);
-    navCore = new NavCore(std::move(base_foot_print),std::move(map_frame));
-    serviceCaller = new visual_servo_namespace::ServiceCaller;
+    baseController = new BaseController(serial_addr,B115200,base_foot_print,odom_frame,publish_tf);
+    navCore = new NavCore(base_foot_print,map_frame);
+	serviceCaller = new visual_servo_namespace::ServiceCaller;
     parameterListener = new ParameterListener(40,8);
     joyTeleop = new JOYTELEOP::JoyTeleop("joy");
-
     vs_status_sub = nh.subscribe("VisualServoStatus",100,&RubberNav::statusCallback,this);
     parameterListener->registerParameterCallback(parameterNames,false);
     const std::string parameter_addr{ros::package::getPath("rubber_navigation")+"/config/BaseModel.yaml"};
@@ -112,7 +111,7 @@ void RubberNav::processCommand()
     if((bool)parameterListener->parameters()[0])
     {
         baseController->sendCommand(BaseController::CLOCK_GO);
-        ros::param::set(parameterNames[0],(double)false);
+		ros::param::set(parameterNames[0],(double)false);
     }
     else if((bool)parameterListener->parameters()[1])
     {
@@ -200,7 +199,7 @@ void RubberNav::checkSrvFinish()
     if(serviceCaller->srvFinished())
     {
         visual_servo_namespace::printServiceStatus(serviceCaller->getSrvResponseStatus().status);
-        iter++;
+		iter++;
         newGoal=true;
         if(serviceCaller->getSrvResponseStatus().status==visual_servo_namespace::SERVICE_STATUS_HOME_FAILED||serviceCaller->getSrvResponseStatus().status==visual_servo_namespace::SERVICE_STATUS_ROBOT_ABORT)
         {
@@ -236,9 +235,11 @@ void RubberNav::run()
                 }
                 case targetPose::NAV:
                 {
-                    iter++;
-                    newGoal = true;
-                    break;
+					if(!serviceCaller->srvCalling())
+	                        serviceCaller->callSrv(visual_servo::manipulate::Request::EMPTY);
+					 //iter++;
+					 //newGoal=true;
+					 break;
                 }
                 case targetPose::TURN:
                 {
@@ -255,7 +256,7 @@ void RubberNav::run()
         }
         case NavCore::ABORTED:
         {
-            ROS_ERROR_STREAM("ROBOT ABORTED ");
+            /*ROS_ERROR_STREAM("ROBOT ABORTED ");
             if(navCore->clearCostMap())
             {
                 iter++;
@@ -263,7 +264,10 @@ void RubberNav::run()
             }
             else
                 ROS_ERROR_STREAM("Failed to call clear cost map service");
-            break;
+			*/
+			iter++;
+            newGoal=true;
+			break;
         }
         default:
             break;
@@ -278,15 +282,15 @@ int main(int argc, char* argv[])
 {
     ros::init(argc,argv,"rubber_navigation");
     ros::NodeHandle nh_("~");
-    ros::Rate loop_rate(60);
+    ros::Rate loop_rate(30);
 
 
     std::string base_foot_print,odom_frame,map_frame,serial_addr;
     bool publish_tf;
-    nh_.param("base_foot_print",base_foot_print,(std::string)"/base_link");
-    nh_.param("odom_frame",odom_frame,(std::string)"/odom");
-    nh_.param("map_frame",map_frame,(std::string)"/map");
-    nh_.param("serial_addr",serial_addr,(std::string)"/dev/ttyS0");
+    nh_.param("base_foot_print",base_foot_print,(std::string)"base_link");
+    nh_.param("odom_frame",odom_frame,(std::string)"odom");
+    nh_.param("map_frame",map_frame,(std::string)"map");
+    nh_.param("serial_addr",serial_addr,(std::string)"/dev/ttyS1");
     nh_.param("publish_tf",publish_tf,(bool)false);
 
     ros::AsyncSpinner spinner(5);

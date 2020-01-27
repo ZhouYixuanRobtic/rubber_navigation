@@ -17,7 +17,8 @@ clearing_rotation_allowed: false
 max_planning_retries: -1
 
 recovery_behavior_enabled: false
-recovery_behaviors: [{name: conservative_reset, type: clear_costmap_recovery/ClearCostmapRecovery}, {name: rotate_recovery, type: rotate_recovery/RotateRecovery}, {name: aggressive_reset, type: clear_costmap_recovery/ClearCostmapRecovery}] #default
+recovery_behaviors: [{name: conservative_reset, type: clear_costmap_recovery/ClearCostmapRecovery}, {name: aggressive_reset, type: clear_costmap_recovery/ClearCostmapRecovery}] #default
+#{name: rotate_recovery, type: rotate_recovery/RotateRecovery} deleted by zyx 2020/01/10 in case of undesired rotation
 conservative_reset_dist: 3.0
  
 #Description:
