@@ -8,6 +8,7 @@
         <rosparam file="$(find rubber_navigation)/config/move_base_params.yaml" command="load" />
         <rosparam file="$(find rubber_navigation)/config/dwa_local_planner_params.yaml" command="load" />
         <rosparam file="$(find rubber_navigation)/config/global_planner_params.yaml" command="load" />
+        <remap from="map" to="map1"/>
     </node>
 
     <node name="map_server" pkg="map_server" type="map_server" args="$(find rubber_navigation)/config/map/map.yaml"/>
