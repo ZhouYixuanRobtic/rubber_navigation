@@ -49,6 +49,7 @@ void NaviSerialManager::receive()
 {
     //serial_mutex_.lock();
     int receiveNumbers=read(m_dFd,&read_buffer[read_used_bytes],BUFFER_SIZE);
+	serial_alive_ =true;
     //serial_mutex_.unlock();
     if(receiveNumbers>0)
     {

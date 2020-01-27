@@ -190,6 +190,11 @@ int BaseController::parsingMsg()
                 break;
             case 0x02:
                 /*preserved for knife move end*/
+                if(message_[2]==0x32)
+                {
+                    ros::param::set("/visual_servo/knifeMoveEnd",1.0);
+                    ROS_INFO_STREAM("Received knife move end");
+                }
                 break;
             case 0x13:
             {
@@ -401,6 +406,15 @@ void BaseController::sendCommand(enum BaseController::Command user_command )
         case GET_POSE:
             serialManager->send(get_pos,COMMAND_SIZE);
             break;
+		case SINGLE_CLOCK_GO:
+			serialManager->send(singleClockGo,COMMAND_SIZE);
+			break;
+		case SINGLE_ANTI_CLOCK_GO:
+			serialManager->send(singleAntiClockGo,COMMAND_SIZE);
+			break;
+		case KNIFE_UNPLUG:
+			serialManager->send(knifeUnplug,COMMAND_SIZE);
+			break;
         default:
             break;
     }

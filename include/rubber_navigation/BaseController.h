@@ -67,8 +67,8 @@ public:
         bool encoderWrong;
     };
     struct Cmd_vel{
-        unsigned char cmd_right;
-        unsigned char cmd_left;
+        char cmd_right;
+        char cmd_left;
     };
     struct Base_model{
         double Wheel_Diameter{120.0};
@@ -78,7 +78,7 @@ public:
         double Wheel_Center_Y_OffSet{0.0};
     };
 private:
-    unsigned char vel[COMMAND_SIZE]             ={0x53,0x13,0x10,0x03,0x00,0x00,0x00,0x34};
+    char vel[COMMAND_SIZE]             ={0x53,0x13,0x10,0x03,0x00,0x00,0x00,0x34};
     const int TIMER_SPAN_RATE_ = 60;
     const int ODOM_TIMER_SPAN_RATE_ = 30;
     const std::string BASE_FOOT_PRINT_;
