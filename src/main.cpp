@@ -4,6 +4,7 @@
 #include "ros/package.h"
 #include <fstream>
 #include "geometry_msgs/Pose2D.h"
+#include "std_msgs/String.h"
 #include "visual_servo/manipulate.h"
 #include "../../Visual-Servo/include/visual_servo/VisualServoMetaType.h"
 
@@ -31,7 +32,7 @@ private:
     };
     bool nav_on{},nav_pause{},newGoal{true};
     const std::vector<std::string> parameterNames{"/visual_servo/clockGo","/visual_servo/antiClockGo","/visual_servo/knifeOn","/visual_servo/knifeOff","/visual_servo/knifeUnplug",
-                                                  "/visual_servo/singleClockGo","/visual_servo/singleAntiClockGo"};
+                                                  "/visual_servo/singleClockGo","/visual_servo/singleAntiClockGo","/visual_servo/steeringIn","/visual_servo/steeringOut","/visual_servo/getSwitch"};
     BaseController *baseController;
     NavCore *navCore;
     visual_servo_namespace::ServiceCaller* serviceCaller;
@@ -39,13 +40,18 @@ private:
     ParameterListener* parameterListener;
 
     ros::Subscriber vs_status_sub;
-
+	ros::Subscriber log_sub;
+    /** log **/
+    ros::Publisher log_pub;
     std::vector<targetPose> targetPoseArray{};
     std::vector<targetPose>::iterator iter;
+
+	bool tappingDone{false};
 
     void checkSrvFinish();
     void getPoseArray();
     void statusCallback(const visual_servo::VisualServoMetaTypeMsg &msg);
+	void logCallback(const std_msgs::String & log_data);
     void processCommand();
     void setBySignal();
     void setGoalInOrder();
@@ -62,6 +68,10 @@ RubberNav::RubberNav(std::string base_foot_print,std::string odom_frame,std::str
     parameterListener = new ParameterListener(40,8);
     joyTeleop = new JOYTELEOP::JoyTeleop("joy");
     vs_status_sub = nh.subscribe("VisualServoStatus",100,&RubberNav::statusCallback,this);
+	log_sub=nh.subscribe("robot_log",10,&RubberNav::logCallback,this);
+    /** log **/
+    log_pub = nh.advertise<std_msgs::String>("robot_log", 10);
+    
     parameterListener->registerParameterCallback(parameterNames,false);
     const std::string parameter_addr{ros::package::getPath("rubber_navigation")+"/config/BaseModel.yaml"};
     baseController->setBaseModel(parameter_addr);
@@ -94,6 +104,9 @@ void RubberNav::getPoseArray()
             targetPoseArray.push_back(target_pose);
         }
         input_file.close();
+        std_msgs::String log_string;
+        log_string.data="The total number of targets is"+std::to_string(targetPoseArray.size());
+        log_pub.publish(log_string);
     }
 }
 void RubberNav::statusCallback(const visual_servo::VisualServoMetaTypeMsg &msg)
@@ -106,11 +119,18 @@ void RubberNav::statusCallback(const visual_servo::VisualServoMetaTypeMsg &msg)
         newGoal=false;
     }
 }
+void RubberNav::logCallback(const std_msgs::String& log_data)
+{
+	if(log_data.data=="Rubber Tapping Done")
+		tappingDone=true;
+	ROS_INFO("LOG CALL BACK");
+
+}
 void RubberNav::processCommand() 
 {
     if((bool)parameterListener->parameters()[0])
     {
-        baseController->sendCommand(BaseController::CLOCK_GO);
+        baseController->sendCommand(BaseController::CLOCK_GO); 
 		ros::param::set(parameterNames[0],(double)false);
     }
     else if((bool)parameterListener->parameters()[1])
@@ -143,6 +163,21 @@ void RubberNav::processCommand()
         baseController->sendCommand(BaseController::SINGLE_ANTI_CLOCK_GO);
         ros::param::set(parameterNames[6],(double)false);
     }
+	 else if((bool)parameterListener->parameters()[7])
+    {
+        baseController->sendCommand(BaseController::STEERING_IN,parameterListener->parameters()[7]);
+        ros::param::set(parameterNames[7],(double)false);
+    }
+	 else if((bool)parameterListener->parameters()[8])
+    {
+        baseController->sendCommand(BaseController::STEERING_OUT);
+        ros::param::set(parameterNames[8],(double)false);
+    }
+	else if((bool)parameterListener->parameters()[9])
+	{
+		baseController->sendCommand(BaseController::GET_SWITCH,parameterListener->parameters()[9]);
+		ros::param::set(parameterNames[9],(double)false);		
+	}
 }
 void RubberNav::setBySignal()
 {
@@ -197,24 +232,25 @@ void RubberNav::setGoalInOrder()
 void RubberNav::checkSrvFinish()
 {
     if(serviceCaller->srvFinished())
-    {
-        visual_servo_namespace::printServiceStatus(serviceCaller->getSrvResponseStatus().status);
-		iter++;
-        newGoal=true;
-        if(serviceCaller->getSrvResponseStatus().status==visual_servo_namespace::SERVICE_STATUS_HOME_FAILED||serviceCaller->getSrvResponseStatus().status==visual_servo_namespace::SERVICE_STATUS_ROBOT_ABORT)
+    {    
+        if(serviceCaller->getSrvResponseStatus().status!=visual_servo_namespace::SERVICE_STATUS_EMPTY&&!tappingDone)
         {
-            nav_on=false;
             navCore->cancelAllGoals();
             newGoal=false;
         }
+        else
+        {
+            iter++;
+            newGoal=true;
+        }
     }
-    else
-        newGoal=false;
 }
 void RubberNav::run()
 {
     processCommand();
     setBySignal();
+    std_msgs::String log_string;
+	static int counter{0};
     switch (navCore->getMoveBaseActionResult())
     {
         case NavCore::SUCCEEDED:
@@ -225,6 +261,7 @@ void RubberNav::run()
                 {
                     if(!serviceCaller->srvCalling())
                         serviceCaller->callSrv(visual_servo::manipulate::Request::CUT);
+					tappingDone=false;					
                     break;
                 }
                 case targetPose::CHARGE:
@@ -238,7 +275,7 @@ void RubberNav::run()
 					if(!serviceCaller->srvCalling())
 	                        serviceCaller->callSrv(visual_servo::manipulate::Request::EMPTY);
 					 //iter++;
-					 //newGoal=true;
+					 //newGoal=true;			                   
 					 break;
                 }
                 case targetPose::TURN:
@@ -252,6 +289,8 @@ void RubberNav::run()
                 default:
                     break;
             }
+            log_string.data="The "+std::to_string(std::distance(targetPoseArray.begin(),iter))+"th target is arrived";
+			//sleep(15);
             break;
         }
         case NavCore::ABORTED:
@@ -267,13 +306,16 @@ void RubberNav::run()
 			*/
 			iter++;
             newGoal=true;
+            log_string.data="The "+std::to_string(std::distance(targetPoseArray.begin(),iter))+"th target is aborted";
 			break;
         }
         default:
+            //log_string.data="The "+std::to_string(std::distance(targetPoseArray.begin(),iter))+"th target is others";
             break;
     }
     checkSrvFinish();
     setGoalInOrder();
+    //log_pub.publish(log_string);
 }
 
 

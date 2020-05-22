@@ -37,7 +37,7 @@ clearing: true,
 inflation_layer: 
   enabled: true
   cost_scaling_factor: 2.58
-  inflation_radius: 0.5
+  inflation_radius: 0.75
  
 static_layer: 
   enabled: true

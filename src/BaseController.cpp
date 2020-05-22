@@ -29,6 +29,13 @@ BaseController::~BaseController()
 {
     delete serialManager;
 }
+void BaseController::steeringControlByAngle(int angle)
+{
+	//最大2.5ms 500~2500 对应0~300
+	int val=500+angle*2000/300;
+	steeringGoByAngle[3]=val>>8;
+	steeringGoByAngle[4]=val;
+}
 unsigned char BaseController::xor_msgs(unsigned char *msg)
 {
     unsigned char check=msg[1];
@@ -206,7 +213,37 @@ int BaseController::parsingMsg()
                 }
                 break;
             }
-            default:
+			case 0x20:
+			{
+				//switch 
+				if(message_[3]==0x01)
+				{
+					if(message_[4]==0x01)
+					{
+						ros::param::set("/visual_servo/knifeLeftMoveEnd",1.0);	
+						knife_left_end=true;
+					}
+					else
+					{
+						ros::param::set("/visual_servo/knifeLeftMoveEnd",0.0);								
+						knife_left_end=false;					
+					}		
+				}
+				else if(message_[3]==0x02)
+				{
+					if(message_[4]==0x01)
+					{
+						ros::param::set("/visual_servo/knifeRightMoveEnd",1.0);	
+						knife_right_end=true;
+					}
+					else
+					{
+						ros::param::set("/visual_servo/knifeRightMoveEnd",0.0);
+						knife_right_end=false;									
+					}				
+				}	
+			}            
+			default:
                 break;
         }
     }
@@ -214,12 +251,17 @@ int BaseController::parsingMsg()
 }
 void BaseController::timerCallback(const ros::TimerEvent &e)
 {
-
+	static int encoder_counter=0;
     //try to get encoder data
-    sendCommand(GET_POSE);
+	if(encoder_counter==4)
+    {
+		sendCommand(GET_POSE);
+		encoder_counter=0;	
+	}
+	encoder_counter++;
     //keep consistency
-    if(!serialManager->isSerialAlive())
-        ROS_ERROR_STREAM("SERIAL WRONG!!!!!");
+    //if(!serialManager->isSerialAlive())
+    	//ROS_ERROR_STREAM("SERIAL WRONG!!!!!");
 
     NaviSerialManager::ReadResult self_results{serialManager->getReadResult()};
 
@@ -234,13 +276,12 @@ void BaseController::timerCallback(const ros::TimerEvent &e)
             {
                 printf("%x ",message_[j]);
             }
-            std::cout<<std::endl<<"---------"<<std::endl;
-            */
+            std::cout<<std::endl<<"---------"<<std::endl;*/
             parsingMsg();
-            ENCODER_.interval=(encoder_after-encoder_pre).toSec();
         }
         if(right_updated&&left_updated)
         {
+            ENCODER_.interval=(encoder_after-encoder_pre).toSec();
             odom_parsing();
             right_updated=false;
             left_updated=false;
@@ -251,7 +292,7 @@ void BaseController::timerCallback(const ros::TimerEvent &e)
     //publish the encoder when have.
     if(ENCODER_.interval!=0)
     {
-        if(ENCODER_.interval>5.0/TIMER_SPAN_RATE_||ENCODER_.interval<0.0)
+        if(ENCODER_.interval>20.0/TIMER_SPAN_RATE_||ENCODER_.interval<0.0)
         {
             if(!ENCODER_.encoderWrong)
                 encoder_stop=ros::Time::now();
@@ -317,6 +358,7 @@ void BaseController::odom_publish_timer_callback(const ros::TimerEvent &e)
 }
 void BaseController::cmd_velCallback(const geometry_msgs::TwistConstPtr  &msg)
 {
+	cmd_vel_watch_=ros::Time::now();
     //manual control first
     if(joy_vel_received_)
         return;
@@ -346,6 +388,8 @@ void BaseController::cmd_velCallback(const geometry_msgs::TwistConstPtr  &msg)
 }
 void BaseController::joy_velCallback(const geometry_msgs::TwistConstPtr  &msg)
 {
+	if(cmd_vel_received_&&ros::Time::now()-cmd_vel_watch_>ros::Duration(0.5))
+		cmd_vel_received_=false;
     Cmd_vel user_cmd_vel{};
     double linear_velocity{msg->linear.x};
     double angular_velocity{msg->angular.z};
@@ -372,7 +416,7 @@ void BaseController::joy_velCallback(const geometry_msgs::TwistConstPtr  &msg)
            sendVelocity(user_cmd_vel);
 
 }
-void BaseController::sendCommand(enum BaseController::Command user_command )
+void BaseController::sendCommand(enum BaseController::Command user_command, double parameter)
 {
     switch (user_command)
     {
@@ -392,28 +436,63 @@ void BaseController::sendCommand(enum BaseController::Command user_command )
             serialManager->send(turn_left,COMMAND_SIZE);
             break;
         case CLOCK_GO:
-            serialManager->send(clockGo,COMMAND_SIZE);
+			get_switch[3]=0x01;
+			serialManager->send(get_switch,COMMAND_SIZE);
+			usleep(33333);
+			if(!knife_left_end)
+            	serialManager->send(clockGo,COMMAND_SIZE);
             break;
         case ANTI_CLOCK_GO:
-            serialManager->send(antiClockGo,COMMAND_SIZE);
+			get_switch[3]=0x02;
+			serialManager->send(get_switch,COMMAND_SIZE);
+			usleep(33333);
+			if(!knife_right_end)
+            	serialManager->send(antiClockGo,COMMAND_SIZE);
             break;
         case KNIFE_ON:
+			std::cout<<"knife on"<<std::endl;
             serialManager->send(knifeOn,COMMAND_SIZE);
             break;
         case KNIFE_OFF:
+			std::cout<<"knife off"<<std::endl;
             serialManager->send(knifeOff,COMMAND_SIZE);
             break;
         case GET_POSE:
             serialManager->send(get_pos,COMMAND_SIZE);
             break;
 		case SINGLE_CLOCK_GO:
-			serialManager->send(singleClockGo,COMMAND_SIZE);
-			break;
+			get_switch[3]=0x01;
+			serialManager->send(get_switch,COMMAND_SIZE);
+			usleep(33333);
+			if(!knife_left_end)
+	    		serialManager->send(singleClockGo,COMMAND_SIZE);
+	    	break;
 		case SINGLE_ANTI_CLOCK_GO:
-			serialManager->send(singleAntiClockGo,COMMAND_SIZE);
-			break;
+			get_switch[3]=0x02;
+			serialManager->send(get_switch,COMMAND_SIZE);
+			usleep(33333);
+			if(!knife_right_end)
+	    		serialManager->send(singleAntiClockGo,COMMAND_SIZE);
+	    	break;
 		case KNIFE_UNPLUG:
-			serialManager->send(knifeUnplug,COMMAND_SIZE);
+	    	serialManager->send(knifeUnplug,COMMAND_SIZE);
+	    	break;
+		case STEERING_IN:
+			steeringControlByAngle(parameter);
+			serialManager->send(steeringGoByAngle,COMMAND_SIZE);
+			ROS_INFO("STEERING IN");
+			break;
+		case STEERING_OUT:
+			steeringControlByAngle(30);
+			serialManager->send(steeringGoByAngle,COMMAND_SIZE);
+			ROS_INFO("STEERING OUT");
+			break;
+		case GET_SWITCH:
+            if(parameter==1)
+			    get_switch[3]=0x01;
+            else
+                get_switch[3]=0x02;
+			serialManager->send(get_switch,COMMAND_SIZE);
 			break;
         default:
             break;

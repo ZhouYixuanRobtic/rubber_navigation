@@ -1,11 +1,17 @@
 <launch>
 
     <arg name="publish_robot_source_odom_tf" default="false"/>
+    <!-- map name of pbstream, map and yaml -->
+    <arg name="map_name" default="0519-1"/>
 
-    <include file ="$(find cartographer_ros)/launch/demo_velodyne2d_localization.launch"/>
+    <include file ="$(find cartographer_ros)/launch/demo_velodyne2d_localization.launch">
+        <arg name="load_state_filename" default="$(find rubber_navigation)/config/map/$(arg map_name).pbstream"/>
+    </include>
 
     <!--move_base-->
-    <include file="$(find rubber_navigation)/launch/move_base.launch"/>
+    <include file="$(find rubber_navigation)/launch/move_base.launch">
+        <arg name="map_filename" default="$(find rubber_navigation)/config/map/$(arg map_name).yaml"/>
+    </include>
 
     <include file="$(find rubber_navigation)/launch/common.launch">
         <arg name="publish_robot_source_odom_tf" value="$(arg publish_robot_source_odom_tf)"/>
@@ -25,7 +31,8 @@
         <param name="base_foot_print" value="base_link"/>
         <param name="odom_frame" value="odom"/>
         <param name="publish_tf" value="$(arg publish_robot_source_odom_tf)"/>
-        <param name="serial_addr" value="/dev/ttyS1"/>
+        <param name="serial_addr" value="/dev/ttyS0"/>
     </node>
+    <node name="logger" pkg="rubber_navigation" type="logger" />
 
 </launch>

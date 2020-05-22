@@ -123,3 +123,9 @@ target_link_libraries(simpleNav ${catkin_LIBRARIES} BaseController NavCore ${Boo
 
 add_executable(goalSaver src/goalSaver.cpp)
 target_link_libraries(goalSaver ${catkin_LIBRARIES} JoyTeleop)
+
+add_executable(logger src/logger.cpp)
+target_link_libraries(logger ${catkin_LIBRARIES})
+
+add_executable(target_writer src/initial_pose.cpp)
+target_link_libraries(target_writer ${catkin_LIBRARIES})

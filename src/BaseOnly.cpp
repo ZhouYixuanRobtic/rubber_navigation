@@ -19,9 +19,9 @@ int main(int argc,char* argv[])
     nh_.param("odom_frame",odom_frame,(std::string)"odom");
     nh_.param("serial_addr",serial_addr,(std::string)"/dev/ttyS1");
 
-	const std::vector<std::string> parameterNames{"/visual_servo/clockGo","/visual_servo/antiClockGo","/visual_servo/knifeOn","/visual_servo/knifeOff","/visual_servo/knifeUnplug","/visual_servo/singleClockGo","/visual_servo/singleAntiClockGo"};
+	const std::vector<std::string> parameterNames{"/visual_servo/clockGo","/visual_servo/antiClockGo","/visual_servo/knifeOn","/visual_servo/knifeOff","/visual_servo/knifeUnplug","/visual_servo/singleClockGo","/visual_servo/singleAntiClockGo","/visual_servo/steeringIn","/visual_servo/steeringOut","/visual_servo/getSwitch"};
 
- 	ParameterListener parameterListener(40,8);
+ 	ParameterListener parameterListener(40,9);
 	parameterListener.registerParameterCallback(parameterNames,false);
 
     BaseController baseController(serial_addr,B115200,base_foot_print,odom_frame,publish_tf);
@@ -35,10 +35,9 @@ int main(int argc,char* argv[])
 
     while(ros::ok())
     {
-
 		if((bool)parameterListener.parameters()[0])
 		{
-		    baseController.sendCommand(BaseController::CLOCK_GO);
+		    baseController.sendCommand(BaseController::CLOCK_GO); 
 			ros::param::set(parameterNames[0],(double)false);
 		}
 		else if((bool)parameterListener.parameters()[1])
@@ -64,7 +63,6 @@ int main(int argc,char* argv[])
 		else if((bool)parameterListener.parameters()[5])
 		{
 		    baseController.sendCommand(BaseController::SINGLE_CLOCK_GO);
-			ROS_INFO("get single clock go");
 		    ros::param::set(parameterNames[5],(double)false);
 		}
 		else if((bool)parameterListener.parameters()[6])
@@ -72,7 +70,21 @@ int main(int argc,char* argv[])
 		    baseController.sendCommand(BaseController::SINGLE_ANTI_CLOCK_GO);
 		    ros::param::set(parameterNames[6],(double)false);
 		}
-
+	 	else if((bool)parameterListener.parameters()[7])
+    	{
+        	baseController.sendCommand(BaseController::STEERING_IN,parameterListener.parameters()[7]);
+        	ros::param::set(parameterNames[7],(double)false);
+    	}
+	 	else if((bool)parameterListener.parameters()[8])
+    	{
+		    baseController.sendCommand(BaseController::STEERING_OUT);
+		    ros::param::set(parameterNames[8],(double)false);
+    	}
+		else if((bool)parameterListener.parameters()[9])
+		{
+			baseController.sendCommand(BaseController::GET_SWITCH,parameterListener.parameters()[9]);
+			ros::param::set(parameterNames[9],(double)false);		
+		}
         ros::spinOnce();
         loop_rate.sleep();
     }
