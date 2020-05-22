@@ -45,33 +45,54 @@ void NaviSerialManager::readWorker(int rate)
         std::cout<<"now quit the read thread"<<std::endl;
     }
 }
+int NaviSerialManager::getCommandBeginIndex(int check_begin_index)
+{
+    for(int i=0;i<read_used_bytes-check_begin_index;++i)
+    {
+        if(read_buffer[i+check_begin_index]==COMMAND_HEAD)
+            return  i+check_begin_index;
+    }
+    return read_used_bytes;
+}
 void NaviSerialManager::receive()
 {
     //serial_mutex_.lock();
     int receiveNumbers=read(m_dFd,&read_buffer[read_used_bytes],BUFFER_SIZE);
-	serial_alive_ =true;
+    //ROS_INFO_STREAM("the receive number is "<<receiveNumbers);
     //serial_mutex_.unlock();
     if(receiveNumbers>0)
     {
         serial_alive_ =true;
         read_used_bytes +=receiveNumbers;
-        if(read_used_bytes%COMMAND_SIZE==0)
+        if(read_used_bytes>=COMMAND_SIZE)
         {
+            int commandBeginIndex{0};
             ReadResult temp{};
             for(int i=0;i<read_used_bytes;i+=COMMAND_SIZE)
             {
-                //WARNING, MAY IGNORE SOME DATA WHEN ACCUMULATE DATA BEYOND RESULT SIZE
-                if(i<=RESULT_SIZE-COMMAND_SIZE)
+                commandBeginIndex=getCommandBeginIndex(commandBeginIndex+i);
+                if(commandBeginIndex<=read_used_bytes-COMMAND_SIZE)
                 {
-                    memcpy(&temp.read_result[i], &read_buffer[i], COMMAND_SIZE);
+                    memcpy(&temp.read_result[i], &read_buffer[commandBeginIndex], COMMAND_SIZE);
                     temp.read_bytes += COMMAND_SIZE;
                 }
+                else
+                   break;
             }
-            queue_mutex_.lock();
             read_result_queue.push(temp);
-            queue_mutex_.unlock();
-            memset(read_buffer,0,BUFFER_SIZE);
-            read_used_bytes = 0;
+            if(commandBeginIndex<read_used_bytes&&commandBeginIndex>read_used_bytes-COMMAND_SIZE)
+            {
+                char transfer_buffer[read_used_bytes-commandBeginIndex]{};
+                memcpy(&transfer_buffer[0],&read_buffer[commandBeginIndex],read_used_bytes-commandBeginIndex);
+                memset(read_buffer,0,BUFFER_SIZE);
+                memcpy(&read_buffer[0],&transfer_buffer[0],read_used_bytes-commandBeginIndex);
+                read_used_bytes=read_used_bytes-commandBeginIndex;
+            }
+            else
+            {
+                memset(read_buffer,0,BUFFER_SIZE);
+                read_used_bytes=0;
+            }
         }
         //Warning, ignore some data when the STM32 send wrong many times
         if(read_used_bytes>=BUFFER_SIZE-COMMAND_SIZE)

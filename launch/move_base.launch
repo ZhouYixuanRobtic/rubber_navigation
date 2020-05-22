@@ -1,4 +1,5 @@
 <launch>
+    <arg name="map_filename"/>
     <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="true">
 
         <rosparam file="$(find rubber_navigation)/config/costmap_common_params.yaml" command="load" ns="global_costmap" />
@@ -10,7 +11,7 @@
         <rosparam file="$(find rubber_navigation)/config/global_planner_params.yaml" command="load" />
         <remap from="map" to="map1"/>
     </node>
-
-    <node name="map_server" pkg="map_server" type="map_server" args="$(find rubber_navigation)/config/map/map.yaml"/>
-
+    <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_filename)">
+    <remap from="map" to="map1"/>
+    </node>
 </launch>

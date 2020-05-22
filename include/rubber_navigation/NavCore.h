@@ -54,8 +54,7 @@ private:
     MoveBaseActionResult moveBaseActionResult_{EMPTY};
     move_base_msgs::MoveBaseGoal goal_{};
 
-    std_srvs::Empty clear_costmap_srv_{};
-
+    std_srvs::Empty clear_costmap_srv_;
     ros::ServiceClient client;
 
     geometry_msgs::Pose2D current_pose_{};

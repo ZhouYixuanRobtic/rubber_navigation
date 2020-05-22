@@ -7,7 +7,9 @@
 
 #include "rubber_navigation/SerialManager.h"
 #define COMMAND_SIZE 8
-#define RESULT_SIZE COMMAND_SIZE*10
+#define RESULT_SIZE COMMAND_SIZE*20
+#define COMMAND_HEAD 0x35
+
 class NaviSerialManager : public SerialManager{
 public:
     struct ReadResult{
@@ -23,6 +25,7 @@ private:
     std::mutex queue_mutex_{};
     std::tr1::shared_ptr<boost::thread> thread_ptr_;
     void readWorker(int rate);
+    int getCommandBeginIndex(int check_begin_index=0);
 public:
     NaviSerialManager(std::string serial_addr, unsigned int baudrate);
     NaviSerialManager(const SerialManager & serialManager);

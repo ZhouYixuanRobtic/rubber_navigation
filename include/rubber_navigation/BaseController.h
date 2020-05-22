@@ -26,21 +26,22 @@ void operator >> ( const YAML::Node& node, T& i )
 #define _USE_MATH_DEFINES
 
 //割胶导轨控制协议  电压第六位，第七位时间 /50ms
-unsigned char clockGo[COMMAND_SIZE]             ={0x53,0x02,0x32,0x30,0x03,0x0C,0x60,0xF0};
-unsigned char antiClockGo[COMMAND_SIZE]         ={0x53,0x02,0x32,0x03,0x30,0x0C,0x60,0xF0};
-unsigned char singleClockGo[COMMAND_SIZE]       ={0x53,0x02,0x32,0x30,0x03,0x00,0x35,0xF0};
-unsigned char singleAntiClockGo[COMMAND_SIZE]   ={0x53,0x02,0x32,0x03,0x30,0x00,0x35,0xF0};
+unsigned char clockGo[COMMAND_SIZE]             ={0x53,0x02,0x38,0x01,0x80,0x30,0x00,0x00};
+unsigned char antiClockGo[COMMAND_SIZE]         ={0x53,0x02,0x38,0x02,0x80,0x30,0x00,0x00};
+unsigned char singleClockGo[COMMAND_SIZE]       ={0x53,0x02,0x38,0x03,0x80,0x00,0x37,0x00};
+unsigned char singleAntiClockGo[COMMAND_SIZE]   ={0x53,0x02,0x38,0x04,0x80,0x00,0x37,0x00};
 //割胶刀控制协议    电压第六位，第七位延时 /500ms
-unsigned char knifeOn[COMMAND_SIZE]             ={0x53,0x02,0x32,0x02,0x20,0x80,0x00,0xEE};
-unsigned char knifeOff[COMMAND_SIZE]            ={0x53,0x02,0x32,0x20,0x02,0x00,0x00,0xEE};
-unsigned char knifeUnplug[COMMAND_SIZE]         ={0x53,0x02,0x32,0x40,0x00,0x00,0x00,0x00};
+unsigned char knifeOn[COMMAND_SIZE]             ={0x53,0x02,0x39,0x02,0x78,0x00,0x00,0x00};
+unsigned char knifeOff[COMMAND_SIZE]            ={0x53,0x02,0x39,0x00,0x78,0x00,0x00,0x00};
+unsigned char knifeUnplug[COMMAND_SIZE]         ={0x53,0x02,0x38,0xFF,0x00,0x00,0x00,0x00};
 
 unsigned char turn_right[COMMAND_SIZE]          ={0x53,0x13,0x10,0x03,0x00,0xf8,0xf8,0x34};
 unsigned char turn_left[COMMAND_SIZE]           ={0x53,0x13,0x10,0x03,0x00,0x08,0x08,0x34};
 unsigned char moving_forward[COMMAND_SIZE]      ={0x53,0x13,0x10,0x03,0x00,0xf0,0x10,0x34};
 unsigned char moving_back[COMMAND_SIZE]         ={0x53,0x13,0x10,0x03,0x00,0x10,0xf0,0x34};
-unsigned char stop_smooth[COMMAND_SIZE]         ={0x53,0x13,0x10,0x03,0x00,0x00,0x00,0x00};
+unsigned char stop_smooth[COMMAND_SIZE]         ={0x53,0x13,0x11,0x02,0x00,0x00,0x00,0x00};
 unsigned char get_pos[COMMAND_SIZE]             ={0x53,0x13,0x13,0x00,0x00,0x00,0x00,0x34};
+unsigned char get_switch[COMMAND_SIZE]          ={0x53,0x02,0x60,0x02,0x00,0x00,0x00,0x00};
 
 
 class BaseController {
@@ -59,6 +60,9 @@ public:
         KNIFE_OFF,
         KNIFE_UNPLUG,
         GET_POSE,
+		STEERING_IN,
+		STEERING_OUT,
+		GET_SWITCH,
     };
     struct Encoder{
         int right_encoder;
@@ -79,6 +83,8 @@ public:
     };
 private:
     char vel[COMMAND_SIZE]             ={0x53,0x13,0x10,0x03,0x00,0x00,0x00,0x34};
+    //舵机控制协议  运行时间第四五位 单位US 总角度300
+    unsigned char steeringGoByAngle[COMMAND_SIZE]  ={0x53,0x02,0x40,0x02,0x00,0x00,0x00,0x00};
     const int TIMER_SPAN_RATE_ = 60;
     const int ODOM_TIMER_SPAN_RATE_ = 30;
     const std::string BASE_FOOT_PRINT_;
@@ -102,6 +108,7 @@ private:
     ros::Timer timer_;
     ros::Timer odom_publish_timer_;
 
+	ros::Time cmd_vel_watch_;
     ros::Time encoder_pre{},encoder_after{},encoder_stop{};
 
     double linear_velocity_{},angular_velocity_{};
@@ -115,6 +122,8 @@ private:
 
     bool right_updated{},left_updated{};
 
+	bool knife_right_end{},knife_left_end{};
+
     unsigned char xor_msgs(unsigned char* msg);
     void init_send_msgs();
     void timerCallback(const ros::TimerEvent & e);
@@ -123,10 +132,11 @@ private:
     void joy_velCallback(const geometry_msgs::TwistConstPtr & msg);
     int parsingMsg();
     void odom_parsing();
+    void steeringControlByAngle(int angle);
 public:
     BaseController(std::string serial_addr, unsigned int baudrate,std::string base_foot_print,std::string odom_frame,bool publish_tf=false);
     ~BaseController();
-    void sendCommand(Command user_command);
+    void sendCommand(Command user_command,double parameter=0.0);
     void sendVelocity(Cmd_vel user_cmd_vel);
     void setBaseModel(const std::string& param_addr);
 };

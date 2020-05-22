@@ -28,6 +28,7 @@ private:
 
 protected:
     std::mutex send_mutex_;
+    //std::mutex serial_mutex_;
     file_descriptor_t m_dFd;
     bool serial_alive_{};
     bool isOpen_{};
