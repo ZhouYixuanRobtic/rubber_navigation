@@ -280,7 +280,12 @@ void RubberNav::run()
                 }
                 case targetPose::TURN:
                 {
-                    ros::param::set("/user/inverse",0.0);
+                    double temp_inverse;
+					ros::param::get("/user/inverse",temp_inverse);
+					usleep(200000);
+					//reverse
+					temp_inverse = (bool)temp_inverse ? 0.0 :1.0;
+					ros::param::set("/user/inverse",temp_inverse);
                     usleep(200000);
                     if(!serviceCaller->srvCalling())
                         serviceCaller->callSrv(visual_servo::manipulate::Request::HOME);

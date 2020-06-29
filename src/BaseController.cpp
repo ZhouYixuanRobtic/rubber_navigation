@@ -7,7 +7,6 @@ BaseController::BaseController(std::string serial_addr, unsigned int baudrate,st
     if(serialManager->openSerial())
     {
         serialManager->registerAutoReadThread(TIMER_SPAN_RATE_);
-
         wheel_status_pub = nh_.advertise<rubber_navigation::WheelStatus>("/wheel_status",100);
         odom_raw_pub = nh_.advertise<nav_msgs::Odometry>("/odom_raw",100);
         cmd_vel_sub = nh_.subscribe("joy_vel",100,&BaseController::joy_velCallback,this);
@@ -264,7 +263,6 @@ void BaseController::timerCallback(const ros::TimerEvent &e)
     	//ROS_ERROR_STREAM("SERIAL WRONG!!!!!");
 
     NaviSerialManager::ReadResult self_results{serialManager->getReadResult()};
-
     encoder_pre = encoder_after;
     if(self_results.read_bytes>=COMMAND_SIZE)
     {
@@ -281,7 +279,7 @@ void BaseController::timerCallback(const ros::TimerEvent &e)
         }
         if(right_updated&&left_updated)
         {
-            ENCODER_.interval=(encoder_after-encoder_pre).toSec();
+			ENCODER_.interval=(encoder_after-encoder_pre).toSec();
             odom_parsing();
             right_updated=false;
             left_updated=false;

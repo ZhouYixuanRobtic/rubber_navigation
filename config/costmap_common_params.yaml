@@ -17,23 +17,23 @@ obstacle_layer:
   observation_sources: laser
   laser: {
 sensor_frame: velodyne,
-data_type: LaserScan,
-topic: scan,
-marking: true,
-clearing: true,
+data_type: LaserScan, 
+topic: scan, 
+marking: true, 
+clearing: true, 
   }
 #  observation_sources: velodyne
 #  velodyne: {
 # sensor_frame: velodyne,
-# data_type: PointCloud2,
+# data_type: PointCloud2, 
 # topic: velodyne_points, # scan_matched_points2  velodyne_points
-# marking: true,
-# clearing: true,
+# marking: true, 
+# clearing: true, 
 # min_obstacle_height: 0.11,
 # max_obstacle_height: 0.6,
 # inf_is_valid: false,
 #  }
-
+ 
 inflation_layer: 
   enabled: true
   cost_scaling_factor: 2.58
