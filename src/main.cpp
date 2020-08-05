@@ -13,6 +13,7 @@
 #include <boost/thread/thread.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/shared_mutex.hpp>
+#include <utility>
 
 #include "tr1/memory"
 using std::tr1::shared_ptr;
@@ -56,14 +57,14 @@ private:
     void setBySignal();
     void setGoalInOrder();
 public:
-    RubberNav(std::string base_foot_print,std::string odom_frame,std::string map_frame,std::string serial_addr,bool publish_tf);
+    RubberNav(const std::string& base_foot_print,std::string odom_frame,std::string map_frame,std::string serial_addr,bool publish_tf);
     ~RubberNav();
     void run();
 };
-RubberNav::RubberNav(std::string base_foot_print,std::string odom_frame,std::string map_frame,std::string serial_addr,bool publish_tf)
+RubberNav::RubberNav(const std::string& base_foot_print,std::string odom_frame,std::string map_frame,std::string serial_addr,bool publish_tf)
 {
-    baseController = new BaseController(serial_addr,B115200,base_foot_print,odom_frame,publish_tf);
-    navCore = new NavCore(base_foot_print,map_frame);
+    baseController = new BaseController(serial_addr,B115200,base_foot_print,std::move(odom_frame),publish_tf);
+    navCore = new NavCore(base_foot_print,std::move(map_frame));
 	serviceCaller = new visual_servo_namespace::ServiceCaller;
     parameterListener = new ParameterListener(40,8);
     joyTeleop = new JOYTELEOP::JoyTeleop("joy");

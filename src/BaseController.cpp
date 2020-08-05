@@ -1,7 +1,7 @@
 
 #include "rubber_navigation/BaseController.h"
 
-BaseController::BaseController(std::string serial_addr, unsigned int baudrate,std::string base_foot_print,std::string odom_frame,bool publish_tf):BASE_FOOT_PRINT_(std::move(base_foot_print)),ODOM_FRAME_(std::move(odom_frame)),publish_tf_(publish_tf)
+BaseController::BaseController(const std::string& serial_addr, unsigned int baudrate,std::string base_foot_print,std::string odom_frame,bool publish_tf):BASE_FOOT_PRINT_(std::move(base_foot_print)),ODOM_FRAME_(std::move(odom_frame)),publish_tf_(publish_tf)
 {
     serialManager = new NaviSerialManager(serial_addr,baudrate);
     if(serialManager->openSerial())

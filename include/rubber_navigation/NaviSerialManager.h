@@ -27,10 +27,10 @@ private:
     int getCommandBeginIndex(int check_begin_index=0);
 public:
     NaviSerialManager(std::string serial_addr, unsigned int baudrate);
-    NaviSerialManager(const SerialManager & serialManager);
-    ~NaviSerialManager();
+    explicit NaviSerialManager(const SerialManager & serialManager);
+    ~NaviSerialManager() override;
     void registerAutoReadThread(int rate);
-    void receive();
+    void receive() override;
     ReadResult & getReadResult()
     {
         if(!read_result_queue.empty())

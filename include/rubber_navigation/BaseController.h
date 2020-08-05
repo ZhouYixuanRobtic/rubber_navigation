@@ -96,7 +96,7 @@ private:
 
     NaviSerialManager *serialManager;
 
-    char message_[COMMAND_SIZE];
+    char message_[COMMAND_SIZE]{};
 
     ros::Publisher wheel_status_pub;
     ros::Publisher odom_raw_pub;
@@ -116,7 +116,7 @@ private:
 
     bool joy_vel_received_{};
     bool cmd_vel_received_{};
-    int battery;
+    int battery{};
 
     bool publish_tf_{};
 
@@ -124,8 +124,8 @@ private:
 
 	bool knife_right_end{},knife_left_end{};
 
-    unsigned char xor_msgs(unsigned char* msg);
-    void init_send_msgs();
+    static unsigned char xor_msgs(unsigned char* msg);
+    static void init_send_msgs();
     void timerCallback(const ros::TimerEvent & e);
     void odom_publish_timer_callback(const ros::TimerEvent & e);
     void cmd_velCallback(const geometry_msgs::TwistConstPtr & msg);
@@ -134,7 +134,7 @@ private:
     void odom_parsing();
     void steeringControlByAngle(int angle);
 public:
-    BaseController(std::string serial_addr, unsigned int baudrate,std::string base_foot_print,std::string odom_frame,bool publish_tf=false);
+    BaseController(const std::string& serial_addr, unsigned int baudrate,std::string base_foot_print,std::string odom_frame,bool publish_tf=false);
     ~BaseController();
     void sendCommand(Command user_command,double parameter=0.0);
     void sendVelocity(Cmd_vel user_cmd_vel);

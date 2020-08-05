@@ -2,8 +2,10 @@
 // Created by xcy on 2019/12/9.
 //
 #include "rubber_navigation/NaviSerialManager.h"
+
+#include <utility>
 #include "ros/ros.h"
-NaviSerialManager::NaviSerialManager(std::string serial_addr, unsigned int baudrate):SerialManager(serial_addr,baudrate)
+NaviSerialManager::NaviSerialManager(std::string serial_addr, unsigned int baudrate):SerialManager(std::move(serial_addr),baudrate)
 {
 
 }
