@@ -7,8 +7,8 @@
 #include "geometry_msgs/Pose2D.h"
 #include <iostream>
 #include <fstream>
-#include "../../Visual-Servo/include/visual_servo/JoyTeleop.h"
-using namespace JOYTELEOP;
+#include "../../Visual-Servo/include/visual_servo/ControlTeleop.h"
+using namespace CONTROLTELEOP;
 class GoalSaver{
 private:
     const std::string MAP_FRAME_;
@@ -109,12 +109,12 @@ int main(int argc,char* argv[])
     nh_.param<std::string>("base_footprint_frame",base_footprint_frame,"base_link");
     nh_.param<std::string>("file_name",file_name,ros::package::getPath("visual_servo")+"/config/treeTarget.txt");
     GoalSaver goalSaver(map_frame,base_footprint_frame,file_name);
-    JoyTeleop joyTeleop ( "joy" );
+    ControlTeleop controlTeleop(false);
 
     ros::Rate loop_rate(30);
     while(ros::ok())
     {
-        switch ( joyTeleop.getControlTrigger() )
+        switch ( controlTeleop.getControlTrigger() )
         {
             case SaveCutPoint:
                 goalSaver.saveGoal(GoalSaver::CUT);

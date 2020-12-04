@@ -5,7 +5,7 @@
 #include <fstream>
 #include "geometry_msgs/Pose2D.h"
 
-#include "../../Visual-Servo/include/visual_servo/JoyTeleop.h"
+#include "../../Visual-Servo/include/visual_servo/ControlTeleop.h"
 
 struct targetPose{
     geometry_msgs::Pose2D pose;
@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
     nh_.param("max_linear_velocity",max_linear_velocity,(double)0.8);
     nh_.param("max_angular_velocity",max_angular_velocity,(double)0.5);
 
-    JOYTELEOP::JoyTeleop joyTeleop("joy",true,max_linear_velocity,max_angular_velocity);
+    CONTROLTELEOP::ControlTeleop controlTeleop(true,max_linear_velocity,max_angular_velocity);
 
     bool nav_on{},nav_pause{},newGoal{true};
     std::vector<targetPose> targetPoseArray{};
@@ -74,9 +74,9 @@ int main(int argc, char* argv[])
     auto iter = targetPoseArray.begin();
     while(ros::ok())
     {
-        switch (joyTeleop.getControlTrigger())
+        switch (controlTeleop.getControlTrigger())
         {
-            case JOYTELEOP::NavOn:
+            case CONTROLTELEOP::NavOn:
             {
                 if(nav_pause&&iter!=targetPoseArray.end())
                 {
@@ -89,7 +89,7 @@ int main(int argc, char* argv[])
                 nav_pause=false;
                 break;
             }
-            case JOYTELEOP::NavPause:
+            case CONTROLTELEOP::NavPause:
             {
                 nav_on=false;
                 nav_pause=true;

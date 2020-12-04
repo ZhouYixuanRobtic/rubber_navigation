@@ -109,7 +109,7 @@ target_link_libraries(NavCore ${catkin_LIBRARIES} ${Boost_LIBRARIES} BaseControl
 
 
 add_executable(rubber_navigation src/main.cpp)
-target_link_libraries(rubber_navigation ${catkin_LIBRARIES} NavCore JoyTeleop parameterTeleop)
+target_link_libraries(rubber_navigation ${catkin_LIBRARIES} NavCore ControlTeleop parameterTeleop)
 add_dependencies(rubber_navigation ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
 
 add_executable(odomFilter src/odomFilter.cpp)
@@ -122,7 +122,7 @@ add_executable(simpleNav src/simpleNav.cpp)
 target_link_libraries(simpleNav ${catkin_LIBRARIES} BaseController NavCore ${Boost_LIBRARIES})
 
 add_executable(goalSaver src/goalSaver.cpp)
-target_link_libraries(goalSaver ${catkin_LIBRARIES} JoyTeleop)
+target_link_libraries(goalSaver ${catkin_LIBRARIES} ControlTeleop)
 
 add_executable(logger src/logger.cpp)
 target_link_libraries(logger ${catkin_LIBRARIES})

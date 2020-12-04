@@ -8,7 +8,7 @@
 #include "visual_servo/manipulate.h"
 #include "../../Visual-Servo/include/visual_servo/VisualServoMetaType.h"
 
-#include "../../Visual-Servo/include/visual_servo/JoyTeleop.h"
+#include "../../Visual-Servo/include/visual_servo/ControlTeleop.h"
 #include "../../Visual-Servo/include/visual_servo/parameterTeleop.h"
 #include <boost/thread/thread.hpp>
 #include <boost/thread/locks.hpp>
@@ -37,7 +37,7 @@ private:
     BaseController *baseController;
     NavCore *navCore;
     visual_servo_namespace::ServiceCaller* serviceCaller;
-    JOYTELEOP::JoyTeleop * joyTeleop;
+    CONTROLTELEOP::ControlTeleop * controlTeleop;
     ParameterListener* parameterListener;
 
     ros::Subscriber vs_status_sub;
@@ -67,7 +67,7 @@ RubberNav::RubberNav(const std::string& base_foot_print,std::string odom_frame,s
     navCore = new NavCore(base_foot_print,std::move(map_frame));
 	serviceCaller = new visual_servo_namespace::ServiceCaller;
     parameterListener = new ParameterListener(40,8);
-    joyTeleop = new JOYTELEOP::JoyTeleop("joy");
+    controlTeleop = new CONTROLTELEOP::ControlTeleop();
     vs_status_sub = nh.subscribe("VisualServoStatus",100,&RubberNav::statusCallback,this);
 	log_sub=nh.subscribe("robot_log",10,&RubberNav::logCallback,this);
     /** log **/
@@ -81,7 +81,7 @@ RubberNav::RubberNav(const std::string& base_foot_print,std::string odom_frame,s
 }
 RubberNav::~RubberNav()
 {
-    delete joyTeleop;
+    delete controlTeleop;
     delete parameterListener;
     delete serviceCaller;
     delete navCore;
@@ -115,7 +115,7 @@ void RubberNav::statusCallback(const visual_servo::VisualServoMetaTypeMsg &msg)
     if(!msg.RobotAllRight)
     {
         navCore->cancelAllGoals();
-        baseController->sendCommand(BaseController::STOP);
+        baseController->passCommand(BaseController::STOP);
         nav_on=false;
         newGoal=false;
     }
@@ -131,60 +131,60 @@ void RubberNav::processCommand()
 {
     if((bool)parameterListener->parameters()[0])
     {
-        baseController->sendCommand(BaseController::CLOCK_GO); 
+        baseController->passCommand(BaseController::CLOCK_GO);
 		ros::param::set(parameterNames[0],(double)false);
     }
     else if((bool)parameterListener->parameters()[1])
     {
-        baseController->sendCommand(BaseController::ANTI_CLOCK_GO);
+        baseController->passCommand(BaseController::ANTI_CLOCK_GO);
         ros::param::set(parameterNames[1],(double)false);
     }
     else if((bool)parameterListener->parameters()[2])
     {
-        baseController->sendCommand(BaseController::KNIFE_ON);
+        baseController->passCommand(BaseController::KNIFE_ON);
         ros::param::set(parameterNames[2],(double)false);
     }
     else if((bool)parameterListener->parameters()[3])
     {
-        baseController->sendCommand(BaseController::KNIFE_OFF);
+        baseController->passCommand(BaseController::KNIFE_OFF);
         ros::param::set(parameterNames[3],(double)false);
     }
     else if((bool)parameterListener->parameters()[4])
     {
-        baseController->sendCommand(BaseController::KNIFE_UNPLUG);
+        baseController->passCommand(BaseController::KNIFE_UNPLUG);
         ros::param::set(parameterNames[4],(double)false);
     }
     else if((bool)parameterListener->parameters()[5])
     {
-        baseController->sendCommand(BaseController::SINGLE_CLOCK_GO);
+        baseController->passCommand(BaseController::SINGLE_CLOCK_GO);
         ros::param::set(parameterNames[5],(double)false);
     }
     else if((bool)parameterListener->parameters()[6])
     {
-        baseController->sendCommand(BaseController::SINGLE_ANTI_CLOCK_GO);
+        baseController->passCommand(BaseController::SINGLE_ANTI_CLOCK_GO);
         ros::param::set(parameterNames[6],(double)false);
     }
 	 else if((bool)parameterListener->parameters()[7])
     {
-        baseController->sendCommand(BaseController::STEERING_IN,parameterListener->parameters()[7]);
+        baseController->passCommand(BaseController::STEERING_IN,parameterListener->parameters()[7]);
         ros::param::set(parameterNames[7],(double)false);
     }
 	 else if((bool)parameterListener->parameters()[8])
     {
-        baseController->sendCommand(BaseController::STEERING_OUT);
+        baseController->passCommand(BaseController::STEERING_OUT);
         ros::param::set(parameterNames[8],(double)false);
     }
 	else if((bool)parameterListener->parameters()[9])
 	{
-		baseController->sendCommand(BaseController::GET_SWITCH,parameterListener->parameters()[9]);
+		baseController->passCommand(BaseController::GET_SWITCH,parameterListener->parameters()[9]);
 		ros::param::set(parameterNames[9],(double)false);		
 	}
 }
 void RubberNav::setBySignal()
 {
-    switch (joyTeleop->getControlTrigger())
+    switch (controlTeleop->getControlTrigger())
     {
-        case JOYTELEOP::NavOn:
+        case CONTROLTELEOP::NavOn:
         {
             if(nav_pause&&iter!=targetPoseArray.end())
             {
@@ -197,13 +197,13 @@ void RubberNav::setBySignal()
             ROS_INFO("NavOn received, ready to go");
             break;
         }
-        case JOYTELEOP::NavPause:
+        case CONTROLTELEOP::NavPause:
         {
             nav_on=false;
             nav_pause=true;
             ROS_INFO("NavPause received, cancel all goals");
             navCore->cancelAllGoals();
-            baseController->sendCommand(BaseController::STOP);
+            baseController->passCommand(BaseController::STOP);
             break;
         }
         default:

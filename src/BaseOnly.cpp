@@ -4,7 +4,6 @@
 #include "ros/ros.h"
 #include "rubber_navigation/BaseController.h"
 #include "ros/package.h"
-#include "../../Visual-Servo/include//visual_servo/JoyTeleop.h"
 #include "../../Visual-Servo/include/visual_servo/parameterTeleop.h"
 int main(int argc,char* argv[])
 {
