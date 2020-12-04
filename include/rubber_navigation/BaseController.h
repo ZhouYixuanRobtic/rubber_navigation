@@ -13,7 +13,8 @@
 #include "rubber_navigation/WheelStatus.h"
 #include <yaml-cpp/yaml.h>
 #include <climits>
-
+#include <boost/thread/locks.hpp>
+#include <boost/thread/shared_mutex.hpp>
 #ifdef HAVE_NEW_YAMLCPP
 // The >> operator disappeared in yaml-cpp 0.5, so this function is
 // added to provide support for code written under the yaml-cpp 0.3 API.
@@ -47,6 +48,7 @@ unsigned char get_switch[COMMAND_SIZE]          ={0x53,0x02,0x60,0x02,0x00,0x00,
 class BaseController {
 public:
     enum Command{
+        DEFAULT,
         STOP,
         TURN_RIGHT,
         TURN_LEFT,
@@ -81,22 +83,30 @@ public:
         double Wheel_Center_X_Offset{0.0};
         double Wheel_Center_Y_OffSet{0.0};
     };
+    struct User_command{
+        enum Command user_command;
+        double parameter;
+    };
 private:
+    mutable boost::shared_mutex send_vel_mutex_{};
+    mutable boost::shared_mutex command_mutex_{};
+
     char vel[COMMAND_SIZE]             ={0x53,0x13,0x10,0x03,0x00,0x00,0x00,0x34};
-    //舵机控制协议  运行时间第四五位 单位US 总角度300 
+    //舵机控制协议  运行时间第四五位 单位US 总角度300
     unsigned char steeringGoByAngle[COMMAND_SIZE]  ={0x53,0x02,0x40,0x02,0x00,0x00,0x00,0x00};
-    const int TIMER_SPAN_RATE_ = 60;
+    const int TIMER_SPAN_RATE_ = 120;
     const int ODOM_TIMER_SPAN_RATE_ = 30;
     const std::string BASE_FOOT_PRINT_;
     const std::string ODOM_FRAME_;
     Encoder ENCODER_{};
     Base_model BASE_MODEL_{};
+    User_command USER_COMMAND_{};
 
     ros::NodeHandle nh_;
 
     NaviSerialManager *serialManager;
 
-    char message_[COMMAND_SIZE]{};
+    char message_[COMMAND_SIZE];
 
     ros::Publisher wheel_status_pub;
     ros::Publisher odom_raw_pub;
@@ -105,18 +115,19 @@ private:
     ros::Subscriber cmd_vel_sub;
     ros::Subscriber joy_vel_sub;
 
-    ros::Timer timer_;
+    ros::Timer read_timer_;
+    ros::Timer send_timer_;
     ros::Timer odom_publish_timer_;
-	
+
 	ros::Time cmd_vel_watch_;
     ros::Time encoder_pre{},encoder_after{},encoder_stop{};
 
-    double linear_velocity_{},angular_velocity_{};
-    double global_x{0.0},global_y{0.0},global_theta{0.0};
+    std::atomic<double> linear_velocity_{},angular_velocity_{};
+    std::atomic<double> global_x{0.0},global_y{0.0},global_theta{0.0};
 
     bool joy_vel_received_{};
     bool cmd_vel_received_{};
-    int battery{};
+    std::atomic_int battery;
 
     bool publish_tf_{};
 
@@ -124,20 +135,22 @@ private:
 
 	bool knife_right_end{},knife_left_end{};
 
-    static unsigned char xor_msgs(unsigned char* msg);
-    static void init_send_msgs();
-    void timerCallback(const ros::TimerEvent & e);
+    unsigned char xor_msgs(unsigned char* msg);
+    void init_send_msgs();
+    void readTimerCallback(const ros::TimerEvent & e);
+    void sendTimerCallback(const ros::TimerEvent & e);
     void odom_publish_timer_callback(const ros::TimerEvent & e);
     void cmd_velCallback(const geometry_msgs::TwistConstPtr & msg);
     void joy_velCallback(const geometry_msgs::TwistConstPtr & msg);
     int parsingMsg();
     void odom_parsing();
     void steeringControlByAngle(int angle);
+    void sendCommand();
 public:
     BaseController(const std::string& serial_addr, unsigned int baudrate,std::string base_foot_print,std::string odom_frame,bool publish_tf=false);
     ~BaseController();
-    void sendCommand(Command user_command,double parameter=0.0);
-    void sendVelocity(Cmd_vel user_cmd_vel);
+    void passCommand(Command user_command, double parameter= 0.0);
+    void sendVelocity();
     void setBaseModel(const std::string& param_addr);
 };
 

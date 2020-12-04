@@ -62,7 +62,11 @@ int main(int argc, char* argv[])
 
     NavCore navCore(base_foot_print,map_frame);
 
-    JOYTELEOP::JoyTeleop joyTeleop("joy");
+    double max_linear_velocity,max_angular_velocity;
+    nh_.param("max_linear_velocity",max_linear_velocity,(double)0.8);
+    nh_.param("max_angular_velocity",max_angular_velocity,(double)0.5);
+
+    JOYTELEOP::JoyTeleop joyTeleop("joy",true,max_linear_velocity,max_angular_velocity);
 
     bool nav_on{},nav_pause{},newGoal{true};
     std::vector<targetPose> targetPoseArray{};
@@ -115,6 +119,7 @@ int main(int argc, char* argv[])
                 }
                 else
                     ROS_ERROR_STREAM("Failed to call clear cost map service");
+
                 break;
             }
             default:

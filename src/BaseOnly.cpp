@@ -37,52 +37,52 @@ int main(int argc,char* argv[])
     {
 		if((bool)parameterListener.parameters()[0])
 		{
-		    baseController.sendCommand(BaseController::CLOCK_GO); 
+		    baseController.passCommand(BaseController::CLOCK_GO);
 			ros::param::set(parameterNames[0],(double)false);
 		}
 		else if((bool)parameterListener.parameters()[1])
 		{
-		    baseController.sendCommand(BaseController::ANTI_CLOCK_GO);
+		    baseController.passCommand(BaseController::ANTI_CLOCK_GO);
 		    ros::param::set(parameterNames[1],(double)false);
 		}
 		else if((bool)parameterListener.parameters()[2])
 		{
-		    baseController.sendCommand(BaseController::KNIFE_ON);
+		    baseController.passCommand(BaseController::KNIFE_ON);
 		    ros::param::set(parameterNames[2],(double)false);
 		}
 		else if((bool)parameterListener.parameters()[3])
 		{
-		    baseController.sendCommand(BaseController::KNIFE_OFF);
+		    baseController.passCommand(BaseController::KNIFE_OFF);
 		    ros::param::set(parameterNames[3],(double)false);
 		}
 		else if((bool)parameterListener.parameters()[4])
 		{
-		    baseController.sendCommand(BaseController::KNIFE_UNPLUG);
+		    baseController.passCommand(BaseController::KNIFE_UNPLUG);
 		    ros::param::set(parameterNames[4],(double)false);
 		}
 		else if((bool)parameterListener.parameters()[5])
 		{
-		    baseController.sendCommand(BaseController::SINGLE_CLOCK_GO);
+		    baseController.passCommand(BaseController::SINGLE_CLOCK_GO);
 		    ros::param::set(parameterNames[5],(double)false);
 		}
 		else if((bool)parameterListener.parameters()[6])
 		{
-		    baseController.sendCommand(BaseController::SINGLE_ANTI_CLOCK_GO);
+		    baseController.passCommand(BaseController::SINGLE_ANTI_CLOCK_GO);
 		    ros::param::set(parameterNames[6],(double)false);
 		}
 	 	else if((bool)parameterListener.parameters()[7])
     	{
-        	baseController.sendCommand(BaseController::STEERING_IN,parameterListener.parameters()[7]);
+        	baseController.passCommand(BaseController::STEERING_IN,parameterListener.parameters()[7]);
         	ros::param::set(parameterNames[7],(double)false);
     	}
 	 	else if((bool)parameterListener.parameters()[8])
     	{
-		    baseController.sendCommand(BaseController::STEERING_OUT);
+		    baseController.passCommand(BaseController::STEERING_OUT);
 		    ros::param::set(parameterNames[8],(double)false);
     	}
 		else if((bool)parameterListener.parameters()[9])
 		{
-			baseController.sendCommand(BaseController::GET_SWITCH,parameterListener.parameters()[9]);
+			baseController.passCommand(BaseController::GET_SWITCH,parameterListener.parameters()[9]);
 			ros::param::set(parameterNames[9],(double)false);		
 		}
         ros::spinOnce();

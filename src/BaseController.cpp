@@ -7,14 +7,17 @@ BaseController::BaseController(const std::string& serial_addr, unsigned int baud
     if(serialManager->openSerial())
     {
         serialManager->registerAutoReadThread(TIMER_SPAN_RATE_);
+
         wheel_status_pub = nh_.advertise<rubber_navigation::WheelStatus>("/wheel_status",100);
         odom_raw_pub = nh_.advertise<nav_msgs::Odometry>("/odom_raw",100);
         cmd_vel_sub = nh_.subscribe("joy_vel",100,&BaseController::joy_velCallback,this);
         joy_vel_sub = nh_.subscribe("cmd_vel",100,&BaseController::cmd_velCallback,this);
         init_send_msgs();
 
-        timer_ = nh_.createTimer(ros::Duration(1.0 / TIMER_SPAN_RATE_),&BaseController::timerCallback,this);
-        timer_.start();
+        read_timer_ = nh_.createTimer(ros::Duration(1.0 / TIMER_SPAN_RATE_), &BaseController::readTimerCallback, this);
+        read_timer_.start();
+        send_timer_ = nh_.createTimer(ros::Duration(1.0/TIMER_SPAN_RATE_),&BaseController::sendTimerCallback, this);
+        send_timer_.start();
         odom_publish_timer_ = nh_.createTimer(ros::Duration(1.0/ODOM_TIMER_SPAN_RATE_),&BaseController::odom_publish_timer_callback,this);
         odom_publish_timer_.start();
         ROS_INFO_STREAM("BASE READY!!!");
@@ -109,9 +112,9 @@ void BaseController::odom_parsing()
         vertical_robot /= 1000.0; //mm to m;
         double horizontal_robot{};//m
 
-        global_x += vertical_robot*cos(global_theta) - horizontal_robot*sin(global_theta);//m
-        global_y += horizontal_robot*cos(global_theta) + vertical_robot*sin(global_theta);//m
-        global_theta +=theta;
+        global_x = global_x+ vertical_robot*cos(global_theta) - horizontal_robot*sin(global_theta);//m
+        global_y = global_y+ horizontal_robot*cos(global_theta) + vertical_robot*sin(global_theta);//m
+        global_theta =global_theta+theta;
 
         linear_velocity_ = (right_distance+left_distance)/(2000.0*dt);
         angular_velocity_ = theta/dt;
@@ -128,9 +131,9 @@ void BaseController::odom_parsing()
         vertical_robot /= 1000.0;//m
         horizontal_robot /= 1000.0;//m
 
-        global_x += vertical_robot*cos(global_theta) - horizontal_robot*sin(global_theta);//m
-        global_y += horizontal_robot*cos(global_theta) + vertical_robot*sin(global_theta);//m
-        global_theta +=theta;
+        global_x = global_x+ vertical_robot*cos(global_theta) - horizontal_robot*sin(global_theta);//m
+        global_y = global_y+ horizontal_robot*cos(global_theta) + vertical_robot*sin(global_theta);//m
+        global_theta = global_theta + theta;
 
         linear_velocity_ = (right_distance+left_distance)/(2000.0*dt);
         angular_velocity_ = theta/dt;
@@ -214,55 +217,67 @@ int BaseController::parsingMsg()
             }
 			case 0x20:
 			{
-				//switch 
+				//switch
 				if(message_[3]==0x01)
 				{
 					if(message_[4]==0x01)
 					{
-						ros::param::set("/visual_servo/knifeLeftMoveEnd",1.0);	
+						ros::param::set("/visual_servo/knifeLeftMoveEnd",1.0);
 						knife_left_end=true;
 					}
 					else
 					{
-						ros::param::set("/visual_servo/knifeLeftMoveEnd",0.0);								
-						knife_left_end=false;					
-					}		
+						ros::param::set("/visual_servo/knifeLeftMoveEnd",0.0);
+						knife_left_end=false;
+					}
 				}
 				else if(message_[3]==0x02)
 				{
 					if(message_[4]==0x01)
 					{
-						ros::param::set("/visual_servo/knifeRightMoveEnd",1.0);	
+						ros::param::set("/visual_servo/knifeRightMoveEnd",1.0);
 						knife_right_end=true;
 					}
 					else
 					{
 						ros::param::set("/visual_servo/knifeRightMoveEnd",0.0);
-						knife_right_end=false;									
-					}				
-				}	
-			}            
+						knife_right_end=false;
+					}
+				}
+			}
 			default:
                 break;
         }
     }
     return 0;
 }
-void BaseController::timerCallback(const ros::TimerEvent &e)
+void BaseController::sendTimerCallback(const ros::TimerEvent &e)
 {
-	static int encoder_counter=0;
-    //try to get encoder data
-	if(encoder_counter==4)
+    static int send_counter{1};
+
+    if(send_counter % 4 == 1)
+        serialManager->send(get_pos,COMMAND_SIZE);        //send get pose in 30 hz
+    else if(send_counter % 4 == 2)
+        sendVelocity();        //send velocity in 30 hz
+    else if(send_counter % 4 == 3)
+        sendCommand();     //send command in 30 hz
+    else
     {
-		sendCommand(GET_POSE);
-		encoder_counter=0;	
-	}
-	encoder_counter++;
+        // preserving 30 hz for other applications
+        ;
+    }
+
+    send_counter = send_counter > TIMER_SPAN_RATE_ ? 1 : send_counter+1;
+
+}
+void BaseController::readTimerCallback(const ros::TimerEvent &e)
+{
     //keep consistency
     //if(!serialManager->isSerialAlive())
     	//ROS_ERROR_STREAM("SERIAL WRONG!!!!!");
 
     NaviSerialManager::ReadResult self_results{serialManager->getReadResult()};
+
     encoder_pre = encoder_after;
     if(self_results.read_bytes>=COMMAND_SIZE)
     {
@@ -279,7 +294,7 @@ void BaseController::timerCallback(const ros::TimerEvent &e)
         }
         if(right_updated&&left_updated)
         {
-			ENCODER_.interval=(encoder_after-encoder_pre).toSec();
+            ENCODER_.interval=(encoder_after-encoder_pre).toSec();
             odom_parsing();
             right_updated=false;
             left_updated=false;
@@ -356,7 +371,8 @@ void BaseController::odom_publish_timer_callback(const ros::TimerEvent &e)
 }
 void BaseController::cmd_velCallback(const geometry_msgs::TwistConstPtr  &msg)
 {
-	cmd_vel_watch_=ros::Time::now();
+    boost::unique_lock<boost::shared_mutex> write_lock(send_vel_mutex_);
+    cmd_vel_watch_=ros::Time::now();
     //manual control first
     if(joy_vel_received_)
         return;
@@ -381,11 +397,12 @@ void BaseController::cmd_velCallback(const geometry_msgs::TwistConstPtr  &msg)
     user_cmd_vel.cmd_left  = left_vel *60.0/(M_PI * BASE_MODEL_.Wheel_Diameter/1000.0);
 
     cmd_vel_received_ = linear_velocity!=0||angular_velocity!=0 ;
-
-    sendVelocity(user_cmd_vel);
+    vel[5] = -user_cmd_vel.cmd_left;
+    vel[6] = user_cmd_vel.cmd_right;
 }
 void BaseController::joy_velCallback(const geometry_msgs::TwistConstPtr  &msg)
 {
+    boost::unique_lock<boost::shared_mutex> write_lock(send_vel_mutex_);
 	if(cmd_vel_received_&&ros::Time::now()-cmd_vel_watch_>ros::Duration(0.5))
 		cmd_vel_received_=false;
     Cmd_vel user_cmd_vel{};
@@ -411,12 +428,21 @@ void BaseController::joy_velCallback(const geometry_msgs::TwistConstPtr  &msg)
 
     //when there is no-zero cmd velocity, do not send zero joy velocity
     if(!cmd_vel_received_||joy_vel_received_)
-           sendVelocity(user_cmd_vel);
-
+    {
+        vel[5] = -user_cmd_vel.cmd_left;
+        vel[6] = user_cmd_vel.cmd_right;
+    }
 }
-void BaseController::sendCommand(enum BaseController::Command user_command, double parameter)
+void BaseController::passCommand(Command user_command, double parameter)
 {
-    switch (user_command)
+    boost::unique_lock<boost::shared_mutex> write_lock(command_mutex_);
+    USER_COMMAND_.user_command = user_command;
+    USER_COMMAND_.parameter = parameter;
+}
+void BaseController::sendCommand()
+{
+    boost::unique_lock<boost::shared_mutex> write_lock(command_mutex_);
+    switch (USER_COMMAND_.user_command)
     {
         case STOP:
             serialManager->send(stop_smooth,COMMAND_SIZE);
@@ -476,7 +502,7 @@ void BaseController::sendCommand(enum BaseController::Command user_command, doub
 	    	serialManager->send(knifeUnplug,COMMAND_SIZE);
 	    	break;
 		case STEERING_IN:
-			steeringControlByAngle(parameter);
+			steeringControlByAngle(static_cast<int>(USER_COMMAND_.parameter));
 			serialManager->send(steeringGoByAngle,COMMAND_SIZE);
 			ROS_INFO("STEERING IN");
 			break;
@@ -486,7 +512,7 @@ void BaseController::sendCommand(enum BaseController::Command user_command, doub
 			ROS_INFO("STEERING OUT");
 			break;
 		case GET_SWITCH:
-            if(parameter==1)
+            if(USER_COMMAND_.parameter==1)
 			    get_switch[3]=0x01;
             else
                 get_switch[3]=0x02;
@@ -495,17 +521,17 @@ void BaseController::sendCommand(enum BaseController::Command user_command, doub
         default:
             break;
     }
+    USER_COMMAND_.user_command = DEFAULT;
 }
-void BaseController::sendVelocity(Cmd_vel user_cmd_vel)
+void BaseController::sendVelocity()
 {
-    vel[5] = -user_cmd_vel.cmd_left;
-    vel[6] = user_cmd_vel.cmd_right;
+    boost::shared_lock<boost::shared_mutex> read_lock(send_vel_mutex_);
     serialManager->send(vel,COMMAND_SIZE);
 }
 void BaseController::setBaseModel(const std::string & param_addr)
 {
-    global_x -= BASE_MODEL_.Wheel_Center_X_Offset;
-    global_y -= BASE_MODEL_.Wheel_Center_Y_OffSet;
+    global_x = global_x - BASE_MODEL_.Wheel_Center_X_Offset;
+    global_y = global_y - BASE_MODEL_.Wheel_Center_Y_OffSet;
     YAML::Node doc = YAML::LoadFile(param_addr);
     try
     {
@@ -519,6 +545,6 @@ void BaseController::setBaseModel(const std::string & param_addr)
     {
         ROS_ERROR("tagParam.yaml is invalid.");
     }
-    global_x+=BASE_MODEL_.Wheel_Center_X_Offset;
-    global_y+=BASE_MODEL_.Wheel_Center_Y_OffSet;
+    global_x =global_x - BASE_MODEL_.Wheel_Center_X_Offset;
+    global_y =global_y - BASE_MODEL_.Wheel_Center_Y_OffSet;
 }

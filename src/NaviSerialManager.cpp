@@ -52,16 +52,15 @@ int NaviSerialManager::getCommandBeginIndex(int check_begin_index)
     for(int i=0;i<read_used_bytes-check_begin_index;++i)
     {
         if(read_buffer[i+check_begin_index]==COMMAND_HEAD)
-            return  i+check_begin_index;            
-    } 
+            return  i+check_begin_index;
+    }
     return read_used_bytes;
 }
 void NaviSerialManager::receive()
 {
-    //serial_mutex_.lock();
+    boost::unique_lock<boost::shared_mutex> writLock(queue_mutex_);
     int receiveNumbers=read(m_dFd,&read_buffer[read_used_bytes],BUFFER_SIZE);
     //ROS_INFO_STREAM("the receive number is "<<receiveNumbers);
-    //serial_mutex_.unlock();
     if(receiveNumbers>0)
     {
         serial_alive_ =true;
@@ -78,23 +77,23 @@ void NaviSerialManager::receive()
                     memcpy(&temp.read_result[i], &read_buffer[commandBeginIndex], COMMAND_SIZE);
                     temp.read_bytes += COMMAND_SIZE;
                 }
-                else 
-                   break;                
+                else
+                   break;
             }
             read_result_queue.push(temp);
             if(commandBeginIndex<read_used_bytes&&commandBeginIndex>read_used_bytes-COMMAND_SIZE)
             {
-                char transfer_buffer[read_used_bytes-commandBeginIndex]{};
+                char transfer_buffer[read_used_bytes-commandBeginIndex];
                 memcpy(&transfer_buffer[0],&read_buffer[commandBeginIndex],read_used_bytes-commandBeginIndex);
                 memset(read_buffer,0,BUFFER_SIZE);
                 memcpy(&read_buffer[0],&transfer_buffer[0],read_used_bytes-commandBeginIndex);
                 read_used_bytes=read_used_bytes-commandBeginIndex;
             }
             else
-            {   
+            {
                 memset(read_buffer,0,BUFFER_SIZE);
-                read_used_bytes=0;            
-            }            
+                read_used_bytes=0;
+            }
         }
         //Warning, ignore some data when the STM32 send wrong many times
         if(read_used_bytes>=BUFFER_SIZE-COMMAND_SIZE)

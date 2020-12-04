@@ -14,7 +14,7 @@ private:
 public:
     Odometry(std::string base_foot_print,std::string odom_frame);
     ~Odometry();
-    double gx{},gy{},gth{},vx{},vth{};
+    double gx,gy,gth,vx,vth;
     void poseCombined_callback(const geometry_msgs::PoseWithCovarianceStamped & msg);
 };
 
@@ -23,7 +23,9 @@ Odometry::Odometry(std::string base_foot_print,std::string odom_frame):BASE_FOOT
     poseCombined_sub=nh.subscribe("robot_pose_ekf/odom_combined",100,&Odometry::poseCombined_callback,this);
     odom_pub = nh.advertise<nav_msgs::Odometry>("/odom",100);
 }
-Odometry::~Odometry()= default;
+Odometry::~Odometry()
+{
+}
 
 void Odometry::poseCombined_callback(const geometry_msgs::PoseWithCovarianceStamped & msg)
 {
