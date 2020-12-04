@@ -5,6 +5,9 @@
 #include"ros/ros.h"
 #include "sensor_msgs/Joy.h"
 #include "geometry_msgs/Twist.h"
+#include <boost/thread/locks.hpp>
+#include <boost/thread/shared_mutex.hpp>
+#include "atomic"
 namespace JOYTELEOP
 {
     enum ControlTrigger{
@@ -51,18 +54,25 @@ namespace JOYTELEOP
         ros::Timer watchdog_timer_;
         ros::Subscriber Joy_sub_;
         ros::Publisher joy_vel_pub;
-        bool joy_alive_{};
         bool publish_vel_{};
         ControlTrigger control_trigger_{};
         double max_linear_velocity_{};
         double max_angular_velocity_{};
 
+        std::atomic_bool joy_alive_{};
+        mutable boost::shared_mutex control_trigger_mutex_;
     public:
         explicit JoyTeleop(std::string topic_name,bool publish_vel=false,double max_linear_velocity=0.8,double max_angular_velocity=0.5);
         ~JoyTeleop();
         void JoyCallback(const sensor_msgs::JoyConstPtr & msg);
         void watchdog(const ros::TimerEvent &e);
-        ControlTrigger getControlTrigger()  {ControlTrigger temp{control_trigger_};control_trigger_=Default;return temp;};
+        ControlTrigger getControlTrigger()
+        {
+            boost::unique_lock<boost::shared_mutex> writLock(control_trigger_mutex_);
+            ControlTrigger temp{control_trigger_};
+            control_trigger_=Default;
+            return temp;
+        };
     };
 }
 

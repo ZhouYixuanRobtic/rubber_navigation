@@ -6,6 +6,9 @@
 #define VISUAL_SERVO_NAVISERIALMANAGER_H
 
 #include "rubber_navigation/SerialManager.h"
+#include <boost/thread/locks.hpp>
+#include <boost/thread/shared_mutex.hpp>
+
 #define COMMAND_SIZE 8
 #define RESULT_SIZE COMMAND_SIZE*20
 #define COMMAND_HEAD 0x35
@@ -19,31 +22,29 @@ public:
 
 private:
     std::queue<ReadResult> read_result_queue{};
-    ReadResult read_results_;
     int read_used_bytes{};
     bool isAutoThreadRegistered_{};
-    std::mutex queue_mutex_{};
     std::tr1::shared_ptr<boost::thread> thread_ptr_;
+    mutable boost::shared_mutex queue_mutex_{};
+
     void readWorker(int rate);
     int getCommandBeginIndex(int check_begin_index=0);
 public:
     NaviSerialManager(std::string serial_addr, unsigned int baudrate);
-    NaviSerialManager(const SerialManager & serialManager);
+    explicit NaviSerialManager(const SerialManager & serialManager);
     ~NaviSerialManager();
     void registerAutoReadThread(int rate);
-    void receive();
-    ReadResult & getReadResult()
+    void receive() override;
+    ReadResult getReadResult()
     {
+        boost::unique_lock<boost::shared_mutex> writeLock(queue_mutex_);
+        ReadResult read_result{};
         if(!read_result_queue.empty())
         {
-            queue_mutex_.lock();
-            read_results_ = read_result_queue.front();
+            read_result = read_result_queue.front();
             read_result_queue.pop();
-            queue_mutex_.unlock();
         }
-        else
-            memset(&read_results_,0, sizeof(ReadResult));
-        return read_results_;
+        return read_result;
     };
 };
 

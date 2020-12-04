@@ -12,7 +12,8 @@ SerialManager::SerialManager(const SerialManager & serialManager): SERIAL_ADDR_(
 {
 
 }
-SerialManager::~SerialManager()
+
+[[noreturn]] SerialManager::~SerialManager()
 {
     if(isOpen_)
         close(m_dFd);
@@ -63,9 +64,7 @@ bool SerialManager::openSerial()
 void SerialManager::receive()
 {
     memset(read_buffer,0,BUFFER_SIZE);
-    //serial_mutex_.lock();
     int receiveNumbers=read(m_dFd,&read_buffer,BUFFER_SIZE);
-    //serial_mutex_.unlock();
     if(receiveNumbers<0)
         serial_alive_ =false;
 }
@@ -73,13 +72,9 @@ void SerialManager::send(const void * src, int size)
 {
     if(isOpen_)
     {
-        send_mutex_.lock();
         memset(write_buffer,0,BUFFER_SIZE);
         memcpy(write_buffer,src,size);
-        send_mutex_.unlock();
-        //serial_mutex_.lock();
         serial_alive_ = (write(m_dFd,write_buffer,size)>=0);
-        //serial_mutex_.unlock();
     }
     else
         printf("the serial is not opened!!!!\r\n");

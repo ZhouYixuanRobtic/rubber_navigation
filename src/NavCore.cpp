@@ -4,10 +4,8 @@ NavCore::NavCore(std::string base_foot_print,std::string map_frame):BASE_FOOT_PR
     tfListener_ = new tf2_ros::TransformListener(tfBuffer_);
 
     moveBaseClient = new MoveBaseClient("move_base",true);
-    while(!moveBaseClient->waitForServer(ros::Duration(4.0)))
-    {
-        usleep(500000);
-    }
+    moveBaseClient->waitForServer(ros::Duration(4.0));
+
     if(!(isMoveBaseClientConnected_ = moveBaseClient->isServerConnected()))
         ROS_ERROR_STREAM("MoveBase ActionServer Failed");
     else
@@ -23,6 +21,7 @@ NavCore::~NavCore()
 }
 void NavCore::actionResultCallback(const move_base_msgs::MoveBaseActionResult &msg)
 {
+    boost::unique_lock<boost::shared_mutex> writeLock(action_result_mutex_);
     switch (msg.status.status)
     {
         case move_base_msgs::MoveBaseActionResult::_status_type::PENDING:
@@ -91,12 +90,13 @@ bool NavCore::isGoalPassed(const geometry_msgs::Pose2D &goal_pose)
 }
 void NavCore::setGoal(const geometry_msgs::Pose2D & goal2d)
 {
-    goal_.target_pose.header.frame_id = "map";
-    goal_.target_pose.header.stamp = ros::Time::now();
-    goal_.target_pose.pose.position.x = goal2d.x;
-    goal_.target_pose.pose.position.y = goal2d.y;
-    goal_.target_pose.pose.orientation = tf::createQuaternionMsgFromYaw (goal2d.theta);
-    moveBaseClient->sendGoal(goal_);
+    move_base_msgs::MoveBaseGoal goal{};
+    goal.target_pose.header.frame_id = "map";
+    goal.target_pose.header.stamp = ros::Time::now();
+    goal.target_pose.pose.position.x = goal2d.x;
+    goal.target_pose.pose.position.y = goal2d.y;
+    goal.target_pose.pose.orientation = tf::createQuaternionMsgFromYaw (goal2d.theta);
+    moveBaseClient->sendGoal(goal);
 }
 void NavCore::cancelAllGoals()
 {

@@ -56,10 +56,9 @@ int NaviSerialManager::getCommandBeginIndex(int check_begin_index)
 }
 void NaviSerialManager::receive()
 {
-    //serial_mutex_.lock();
+    boost::unique_lock<boost::shared_mutex> writLock(queue_mutex_);
     int receiveNumbers=read(m_dFd,&read_buffer[read_used_bytes],BUFFER_SIZE);
     //ROS_INFO_STREAM("the receive number is "<<receiveNumbers);
-    //serial_mutex_.unlock();
     if(receiveNumbers>0)
     {
         serial_alive_ =true;
@@ -82,7 +81,7 @@ void NaviSerialManager::receive()
             read_result_queue.push(temp);
             if(commandBeginIndex<read_used_bytes&&commandBeginIndex>read_used_bytes-COMMAND_SIZE)
             {
-                char transfer_buffer[read_used_bytes-commandBeginIndex]{};
+                char transfer_buffer[read_used_bytes-commandBeginIndex];
                 memcpy(&transfer_buffer[0],&read_buffer[commandBeginIndex],read_used_bytes-commandBeginIndex);
                 memset(read_buffer,0,BUFFER_SIZE);
                 memcpy(&read_buffer[0],&transfer_buffer[0],read_used_bytes-commandBeginIndex);

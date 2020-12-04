@@ -28,6 +28,7 @@ void JoyTeleop::JoyCallback(const sensor_msgs::JoyConstPtr &msg)
 {
     watchdog_timer_.stop();
     watchdog_timer_.start();
+    boost::unique_lock<boost::shared_mutex> writLock(control_trigger_mutex_);
     if(msg->axes[2]==-1&&msg->buttons[0]) //A
     {
         control_trigger_=ManipulateOn;

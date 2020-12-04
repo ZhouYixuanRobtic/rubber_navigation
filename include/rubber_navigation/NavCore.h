@@ -46,13 +46,13 @@ private:
     const std::string BASE_FOOT_PRINT_;
     const std::string MAP_FRAME_;
 
+    mutable boost::shared_mutex action_result_mutex_{};
     ros::NodeHandle nh;
     ros::Subscriber action_result_sub;
 
     bool isMoveBaseClientConnected_{};
     MoveBaseClient *moveBaseClient;
     MoveBaseActionResult moveBaseActionResult_{EMPTY};
-    move_base_msgs::MoveBaseGoal goal_{};
 
     std_srvs::Empty clear_costmap_srv_;
     ros::ServiceClient client;
@@ -76,7 +76,13 @@ public:
 
     void setGoal(const geometry_msgs::Pose2D &goal2d);
 
-    MoveBaseActionResult getMoveBaseActionResult() { MoveBaseActionResult temp{moveBaseActionResult_}; moveBaseActionResult_=MoveBaseActionResult::EMPTY;return temp;};
+    MoveBaseActionResult getMoveBaseActionResult()
+    {
+        boost::unique_lock<boost::shared_mutex> writeLock(action_result_mutex_);
+        MoveBaseActionResult temp{moveBaseActionResult_};
+        moveBaseActionResult_=MoveBaseActionResult::EMPTY;
+        return temp;
+    };
 
     const geometry_msgs::Pose2D &getCurrentPose(const std::string &target_frame, const std::string &source_frame);
 
