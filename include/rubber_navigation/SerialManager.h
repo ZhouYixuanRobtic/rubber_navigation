@@ -36,7 +36,7 @@ public:
     explicit SerialManager(std::string serial_addr, unsigned int baudrate);
     SerialManager(const SerialManager & serialManager);
 
-    [[noreturn]] virtual ~SerialManager();
+    virtual ~SerialManager();
     unsigned int getBaudrate() const {return BAUDRATE_;};
     std::string getSerialAddr() const{return SERIAL_ADDR_;};
     bool isOpen() const{ return isOpen_;};
