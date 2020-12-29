@@ -71,7 +71,7 @@ void NaviSerialManager::receive()
             ReadResult temp{};
             for(int i=0;i<read_used_bytes;i+=COMMAND_SIZE)
             {
-                commandBeginIndex=getCommandBeginIndex(commandBeginIndex+i);
+                commandBeginIndex=getCommandBeginIndex(commandBeginIndex+COMMAND_SIZE);
                 if(commandBeginIndex<=read_used_bytes-COMMAND_SIZE)
                 {
                     memcpy(&temp.read_result[i], &read_buffer[commandBeginIndex], COMMAND_SIZE);
