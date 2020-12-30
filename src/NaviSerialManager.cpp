@@ -102,11 +102,5 @@ void NaviSerialManager::receive()
             memset(read_buffer,0,BUFFER_SIZE);
         }
     }
-    else if(receiveNumbers<0)
-    {
-        serial_alive_ =false;
-        read_used_bytes= 0;
-        memset(read_buffer,0,BUFFER_SIZE);
-    }
 
 }
