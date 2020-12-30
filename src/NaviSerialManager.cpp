@@ -65,7 +65,7 @@ void NaviSerialManager::receive()
         read_used_bytes +=receiveNumbers;
         if(read_used_bytes>=COMMAND_SIZE)
         {
-            int commandBeginIndex{0};
+            int commandBeginIndex{-COMMAND_SIZE};
             ReadResult temp{};
             for(int i=0;i<read_used_bytes;i+=COMMAND_SIZE)
             {
