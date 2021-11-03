@@ -378,8 +378,8 @@ void BaseController::cmd_velCallback(const geometry_msgs::TwistConstPtr  &msg)
         return;
 
     Cmd_vel user_cmd_vel{};
-    double linear_velocity{msg->linear.x};
-    double angular_velocity{msg->angular.z};
+    double linear_velocity{-msg->linear.x};
+    double angular_velocity{-msg->angular.z};
     double right_vel{}, left_vel{};
     if(linear_velocity == 0)
     {
@@ -406,8 +406,8 @@ void BaseController::joy_velCallback(const geometry_msgs::TwistConstPtr  &msg)
 	if(cmd_vel_received_&&ros::Time::now()-cmd_vel_watch_>ros::Duration(0.5))
 		cmd_vel_received_=false;
     Cmd_vel user_cmd_vel{};
-    double linear_velocity{msg->linear.x};
-    double angular_velocity{msg->angular.z};
+    double linear_velocity{-msg->linear.x};
+    double angular_velocity{-msg->angular.z};
     double right_vel{}, left_vel{};
     if(linear_velocity == 0)
     {

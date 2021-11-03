@@ -33,6 +33,7 @@ find_package(catkin REQUIRED COMPONENTS
   roslib
   std_srvs
   tf
+  visual_servo
 )
 
 find_package(PkgConfig REQUIRED)
