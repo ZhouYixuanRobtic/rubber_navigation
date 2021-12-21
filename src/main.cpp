@@ -1,3 +1,5 @@
+#include <std_msgs/Int8.h>
+
 #include <boost/thread/locks.hpp>
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/thread.hpp>
@@ -20,6 +22,8 @@ using std::tr1::shared_ptr;
 class RubberNav {
  private:
   ros::NodeHandle nh;
+  // debug test 1221
+  ros::Publisher debug_test_pub_;
   struct targetPose {
     geometry_msgs::Pose2D pose;
     enum TargetAction {
@@ -69,6 +73,8 @@ class RubberNav {
 RubberNav::RubberNav(const std::string& base_foot_print, std::string odom_frame,
                      std::string map_frame, std::string serial_addr,
                      bool publish_tf) {
+  // debug test 1221
+  debug_test_pub_ = nh.advertise<std_msgs::Int8>("datatest", 10);
   baseController = new BaseController(serial_addr, B115200, base_foot_print,
                                       std::move(odom_frame), publish_tf);
   navCore = new NavCore(base_foot_print, std::move(map_frame));
@@ -196,6 +202,80 @@ void RubberNav::setGoalInOrder() {
       ROS_INFO_STREAM("now goal: x is " << (*iter).pose.x << " y is "
                                         << (*iter).pose.y << " theata is "
                                         << (*iter).pose.theta);
+      // debug test 1221
+      if ((*iter).pose.x == 1.63624) {  //起点，走向树0
+        std_msgs::Int8 msg;
+        msg.data = 1;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 5.43592) {  //离开树0
+        std_msgs::Int8 msg;
+        msg.data = 6;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 9.26154) {  //离开树1
+        std_msgs::Int8 msg;
+        msg.data = 11;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 17.0123) {  //离开树2
+        std_msgs::Int8 msg;
+        msg.data = 16;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 20.6753) {  //离开树3
+        std_msgs::Int8 msg;
+        msg.data = 21;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 24.6053) {  //离开树4
+        std_msgs::Int8 msg;
+        msg.data = 26;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 20.9464) {  //离开树5
+        std_msgs::Int8 msg;
+        msg.data = 31;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 17.0512) {  //离开树6
+        std_msgs::Int8 msg;
+        msg.data = 36;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 13.3378) {  //离开树7
+        std_msgs::Int8 msg;
+        msg.data = 41;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 9.15037) {  //离开树8
+        std_msgs::Int8 msg;
+        msg.data = 46;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 9.15036) {  //开始换向
+        std_msgs::Int8 msg;
+        msg.data = 51;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 8.99171) {  //离开树9
+        std_msgs::Int8 msg;
+        msg.data = 56;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 13.0777) {  //离开树10
+        std_msgs::Int8 msg;
+        msg.data = 61;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 17.0077) {  //离开树11
+        std_msgs::Int8 msg;
+        msg.data = 66;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 20.6251) {  //离开树12
+        std_msgs::Int8 msg;
+        msg.data = 71;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 24.5515) {  //离开树13
+        std_msgs::Int8 msg;
+        msg.data = 76;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 28.4384) {  //离开树14
+        std_msgs::Int8 msg;
+        msg.data = 81;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 26.9781) {  //离开树15
+        std_msgs::Int8 msg;
+        msg.data = 86;
+        debug_test_pub_.publish(msg);
+      }
       navCore->setGoal((*iter).pose);
       newGoal = false;
     } else {
@@ -260,6 +340,80 @@ void RubberNav::run() {
         }
         default:
           break;
+      }
+      // debug test 1221
+      if ((*iter).pose.x == 1.63624) {  //到达树0
+        std_msgs::Int8 msg;
+        msg.data = 2;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 5.43592) {  //到达树1
+        std_msgs::Int8 msg;
+        msg.data = 7;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 9.26154) {  //到达树2
+        std_msgs::Int8 msg;
+        msg.data = 12;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 17.0123) {  //到达树3
+        std_msgs::Int8 msg;
+        msg.data = 17;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 20.6753) {  //到达树4
+        std_msgs::Int8 msg;
+        msg.data = 22;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 24.6053) {  //到达树5
+        std_msgs::Int8 msg;
+        msg.data = 27;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 20.9464) {  //到达树6
+        std_msgs::Int8 msg;
+        msg.data = 32;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 17.0512) {  //到达树7
+        std_msgs::Int8 msg;
+        msg.data = 37;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 13.3378) {  //到达树8
+        std_msgs::Int8 msg;
+        msg.data = 42;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 9.15037) {  //到达树9
+        std_msgs::Int8 msg;
+        msg.data = 47;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 9.15036) {  //开始换向
+        std_msgs::Int8 msg;
+        msg.data = 52;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 8.99171) {  //到达树10
+        std_msgs::Int8 msg;
+        msg.data = 57;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 13.0777) {  //到达树11
+        std_msgs::Int8 msg;
+        msg.data = 62;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 17.0077) {  //到达树12
+        std_msgs::Int8 msg;
+        msg.data = 67;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 20.6251) {  //到达树13
+        std_msgs::Int8 msg;
+        msg.data = 72;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 24.5515) {  //到达树14
+        std_msgs::Int8 msg;
+        msg.data = 77;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 28.4384) {  //到达树15
+        std_msgs::Int8 msg;
+        msg.data = 82;
+        debug_test_pub_.publish(msg);
+      } else if ((*iter).pose.x == 1.70157) {  //结束
+        std_msgs::Int8 msg;
+        msg.data = 87;
+        debug_test_pub_.publish(msg);
       }
       log_string.data =
           "The " +
