@@ -1,0 +1,30 @@
+<!-- cartographer online localization-->
+<launch>
+    <arg name="rviz" default="true"/>
+    <arg name="bag_filename" default="/home/xcy/2021-12-15-01.bag"/>
+    <!-- <arg name="load_state_filename" default="$(find rubber_navigation)/config/map/map.pbstream"/> -->
+    <arg name="load_state_filename" default="/home/xcy/test_map/2021-12-16-01/map.pbstream"/>
+    <param name="/use_sim_time" value="true" />
+<!--TF STATIC-->
+    <param name="robot_description" command="xacro --inorder  '$(find rubber_navigation)/urdf/aubo_i5.xacro'"/>
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+
+<!-- localization core-->
+	<node name="cartographer_node" pkg="cartographer_ros"
+    	type="cartographer_node" args="
+          -configuration_directory $(find rubber_navigation)/config/cartographer
+          -configuration_basename demo_velodyne2d_localization.lua
+          -load_state_filename $(arg load_state_filename)" output="screen"
+      >
+	  <remap from="points2" to="lslidar_point_cloud"/>
+	  <remap from="/imu" to="/imu/data_raw"/>
+  </node>
+
+  <node name="cartographer_occupancy_grid_node" pkg="cartographer_ros"
+      type="cartographer_occupancy_grid_node" args="-resolution 0.05" />
+
+<!-- visualization -->
+	<node if="$(arg rviz)" name="rviz" pkg="rviz" type="rviz" required="true"
+		  args="-d $(find rubber_navigation)/rviz/3d_localization.rviz"/>
+	<node name="playbag" pkg="rosbag" type="play" args="--clock $(arg bag_filename)" />
+</launch>

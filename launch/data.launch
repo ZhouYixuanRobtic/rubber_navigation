@@ -1,0 +1,8 @@
+<launch>
+    <!--include file="$(find realsense2_camera)/launch/rs_rgbd.launch">
+        <arg name="enable_infra1" default="false"/>
+        <arg name="enable_infra2" default="false"/>
+    </include-->
+    <include file="$(find imu_interface_broadcaster)/launch/imu.launch"/>
+    <include file="$(find rubber_navigation)/launch/lslidar_c16.launch"/>
+</launch>

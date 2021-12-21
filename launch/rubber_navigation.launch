@@ -31,5 +31,7 @@
         <param name="serial_addr" value="/dev/ttyS0"/>
     </node>
     <node name="logger" pkg="rubber_navigation" type="logger" />
+    <node pkg="visual_servo" type="landmark_broadcaster" name="landmark_broadcaster" output="screen"/>
+
 
 </launch>

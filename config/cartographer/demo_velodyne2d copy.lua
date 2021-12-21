@@ -46,7 +46,7 @@ options = {
 
 MAP_BUILDER.use_trajectory_builder_2d = true
 
-TRAJECTORY_BUILDER_2D.max_z= 1.2 --1
+TRAJECTORY_BUILDER_2D.max_z= 0.8 --1
 TRAJECTORY_BUILDER_2D.min_z= 0.1 ---0.1
 TRAJECTORY_BUILDER_2D.min_range=0.4
 TRAJECTORY_BUILDER_2D.max_range=12.0
@@ -57,8 +57,8 @@ TRAJECTORY_BUILDER_2D.use_imu_data = true
 POSE_GRAPH.optimize_every_n_nodes=10
 MAP_BUILDER.num_background_threads =8
 POSE_GRAPH.constraint_builder.sampling_ratio = 0.3 --0.3
-POSE_GRAPH.global_sampling_ratio = 0.2
-POSE_GRAPH.constraint_builder.min_score=0.55
+POSE_GRAPH.global_sampling_ratio = 1e-4
+POSE_GRAPH.constraint_builder.min_score=0.6
 TRAJECTORY_BUILDER_2D.adaptive_voxel_filter.min_num_points =100
 TRAJECTORY_BUILDER_2D.adaptive_voxel_filter.max_range=30
 TRAJECTORY_BUILDER_2D.adaptive_voxel_filter.max_length=1

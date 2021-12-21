@@ -12,29 +12,29 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-include "./demo_velodyne2d.lua"
+include "demo_velodyne2d.lua"
 
 TRAJECTORY_BUILDER.pure_localization_trimmer = {
   max_submaps_to_keep = 3,
 }
-TRAJECTORY_BUILDER_2D.max_z= 1
-TRAJECTORY_BUILDER_2D.min_z= 0.1 ---0.1
+TRAJECTORY_BUILDER_2D.max_z= 0.8 --1
+TRAJECTORY_BUILDER_2D.min_z= 0.2 ---0.1
 TRAJECTORY_BUILDER_2D.min_range=0.4
 TRAJECTORY_BUILDER_2D.max_range=12.0
 TRAJECTORY_BUILDER_2D.num_accumulated_range_data = 1
 --TRAJECTORY_BUILDER_2D.ceres_scan_matcher.translation_weight = 10.
 --TRAJECTORY_BUILDER_2D.ceres_scan_matcher.rotation_weight = 40.
-TRAJECTORY_BUILDER_2D.use_online_correlative_scan_matching = false
-TRAJECTORY_BUILDER_2D.submaps.num_range_data=45
+--TRAJECTORY_BUILDER_2D.use_online_correlative_scan_matching = false
+TRAJECTORY_BUILDER_2D.submaps.num_range_data=90
 POSE_GRAPH.optimize_every_n_nodes = 1
 POSE_GRAPH.constraint_builder.max_constraint_distance = 25
-MAP_BUILDER.num_background_threads =8
+MAP_BUILDER.num_background_threads =4
 
 -- the parameters useful 0.2 0.3
-POSE_GRAPH.constraint_builder.sampling_ratio = 0.15 --0.03
-POSE_GRAPH.global_sampling_ratio = 0.01 --1e-2
-POSE_GRAPH.constraint_builder.min_score=0.55
-POSE_GRAPH.constraint_builder.global_localization_min_score=0.55
+POSE_GRAPH.constraint_builder.sampling_ratio = 0.3 --0.03
+POSE_GRAPH.global_sampling_ratio = 0.002 --1e-2
+POSE_GRAPH.constraint_builder.min_score=0.6
+POSE_GRAPH.constraint_builder.global_localization_min_score=0.65
 global_constraint_search_after_n_seconds = 10.
 
 return options
