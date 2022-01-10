@@ -133,3 +133,5 @@ target_link_libraries(target_writer ${catkin_LIBRARIES})
 
 add_executable(datatest src/datatest.cpp)
 target_link_libraries(datatest ${catkin_LIBRARIES})
+add_executable(testtest src/testtest.cpp)
+target_link_libraries(testtest ${catkin_LIBRARIES})

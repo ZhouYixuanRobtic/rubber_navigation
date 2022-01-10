@@ -17,8 +17,8 @@ include "./demo_velodyne2d.lua"
 TRAJECTORY_BUILDER.pure_localization_trimmer = {
   max_submaps_to_keep = 3,
 }
-TRAJECTORY_BUILDER_2D.max_z= 1
-TRAJECTORY_BUILDER_2D.min_z= 0.1 ---0.1
+TRAJECTORY_BUILDER_2D.max_z= 1.3
+TRAJECTORY_BUILDER_2D.min_z= 0.0 ---0.1
 TRAJECTORY_BUILDER_2D.min_range=0.4
 TRAJECTORY_BUILDER_2D.max_range=12.0
 TRAJECTORY_BUILDER_2D.num_accumulated_range_data = 1

@@ -52,17 +52,17 @@ int openNewFile() {
 }
 
 int step = 0;
-std::vector<int> vec{
-    1,  2,  301, 302, 303, 6,  7,  301, 302, 303, 11, 12, 301, 302, 303,
-    16, 17, 301, 302, 303, 21, 22, 301, 302, 303, 26, 27, 301, 302, 303,
-    31, 32, 301, 302, 303, 36, 37, 301, 302, 303, 41, 42, 301, 302, 303,
-    46, 47, 301, 302, 303, 51, 52, 301, 302, 303, 56, 57, 301, 302, 303,
-    61, 62, 301, 302, 303, 66, 67, 301, 302, 303, 71, 72, 301, 302, 303,
-    76, 77, 301, 302, 303, 81, 82, 301, 302, 303, 86, 87};
+std::vector<int> vec{1,   2,   101, 102, 103, 6,   7,   101, 102, 103, 11,  12,
+                     101, 102, 103, 16,  17,  101, 102, 103, 21,  22,  101, 102,
+                     103, 26,  27,  101, 102, 103, 31,  32,  101, 102, 103, 36,
+                     37,  101, 102, 103, 41,  42,  101, 102, 103, 46,  47,  101,
+                     102, 103, 51,  52,  56,  57,  101, 102, 103, 61,  62,  101,
+                     102, 103, 66,  67,  101, 102, 103, 71,  72,  101, 102, 103,
+                     76,  77,  101, 102, 103, 81,  82,  101, 102, 103, 86,  87};
 std::vector<int>::iterator iter = vec.begin();
 ros::Publisher joy_pub;
 void robotLogCB(const std_msgs::Int8::ConstPtr& msg);
-
+std::vector<int> tag_id;
 int main(int argc, char** argv) {
   ros::init(argc, argv, "datatest");
   ros::NodeHandle nh_;
@@ -75,54 +75,88 @@ int main(int argc, char** argv) {
   ros::spin();
   if (outputfile.is_open()) {
     outputfile << endl;
+    std::vector<int>::iterator a = tag_id.begin();
+    while (a != tag_id.end()) {
+      outputfile << *a << " ";
+      ++a;
+    }
+    tag_id.clear();
+    outputfile << endl;
     outputfile.close();
   }
   return 0;
 }
+
 void robotLogCB(const std_msgs::Int8::ConstPtr& msg) {
-  if (msg->data == (*vec.begin())) {  // 1代表开始
-    if (outputfile
-            .is_open()) {  // 如果开始的时候文件是打开的，说明上一次最后没有关文件
+  int temp = msg->data;
+  std::cout << "msg is " << temp << std::endl;
+  if (msg->data >= 110) {
+    tag_id.push_back(msg->data - 110);
+    std::cout << msg->data - 110 << " is pushed back" << std::endl;
+  } else {
+    if (msg->data == (*vec.begin())) {  // 1代表开始
+      if (outputfile
+              .is_open()) {  // 如果开始的时候文件是打开的，说明上一次最后没有关文件
+        outputfile << endl;
+        std::vector<int>::iterator a = tag_id.begin();
+        while (a != tag_id.end()) {
+          outputfile << *a << " ";
+          ++a;
+        }
+        tag_id.clear();
+        outputfile << endl;
+        outputfile.close();
+        iter = vec.begin();
+        ROS_WARN("The file is not closed, now close the file.");
+      }
+      openNewFile();  // 开始后正常打开新文件
+      ROS_INFO("New loop open new file.");
+    }  //每次发1说明开始了新一轮测试
+    // TODO: 如果没有正确关闭文件，又跳过了开始，那么就只能人工检查了
+    if (!outputfile
+             .is_open()) {  // 此时如果没打开文件，说明跳过了开始的1，那么打开一个新文件
+      openNewFile();
+      ROS_WARN("Open file unexpectly, because 1st step is skipped.");
+    }
+    if ((*iter) != msg->data) {
+      //如果不相等，说明有点数被跳过了，用星号代替
+      if (*(iter - 1) == msg->data) {
+        return;
+      }
+      while ((*iter) != msg->data) {
+        outputfile << "*"
+                   << " ";
+        std::cout << "* is insert" << std::endl;
+        iter++;
+      }
+    }
+    //两边步数相等，说明没有被跳过，正常记录时间
+    outputfile << fixed << setprecision(3) << ros::Time::now().toSec() << " ";
+    std::cout << "time is insert" << std::endl;
+
+    if (msg->data != vec.back()) {
+      ROS_INFO("iter++");
+      iter++;
+    } else {  //一共要记录23个时间点
+      outputfile << endl;
+      std::vector<int>::iterator a = tag_id.begin();
+      while (a != tag_id.end()) {
+        outputfile << *a << " ";
+        ++a;
+      }
+      tag_id.clear();
       outputfile << endl;
       outputfile.close();
       iter = vec.begin();
-      ROS_WARN("The file is not closed, now close the file.");
+      ROS_INFO("File close, end.");
+      // sensor_msgs::Joy a;
+      // a.header.stamp = ros::Time::now();
+      // a.header.frame_id = "/dev/input/js0";
+      // a.axes = std::vector<float>{0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0};
+      // a.buttons = std::vector<int>{0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0};
+      // sleep(10);
+      // joy_pub.publish(a);
+      // std::cout << "joy" << std::endl;
     }
-    openNewFile();  // 开始后正常打开新文件
-    ROS_INFO("New loop open new file.");
-  }  //每次发1说明开始了新一轮测试
-  // TODO: 如果没有正确关闭文件，又跳过了开始，那么就只能人工检查了
-  if (!outputfile
-           .is_open()) {  // 此时如果没打开文件，说明跳过了开始的1，那么打开一个新文件
-    openNewFile();
-    ROS_WARN("Open file unexpectly, because 1st step is skipped.");
-  }
-  if ((*iter) != msg->data) {
-    //如果不相等，说明有点数被跳过了，用星号代替
-    while ((*iter) != msg->data) {
-      outputfile << "*"
-                 << " ";
-      iter++;
-    }
-  }
-  //两边步数相等，说明没有被跳过，正常记录时间
-  outputfile << fixed << setprecision(3) << ros::Time::now().toSec() << " ";
-
-  if (msg->data != vec.back()) {
-    ROS_INFO("iter++");
-    iter++;
-  } else {  //一共要记录23个时间点
-    outputfile << endl;
-    outputfile.close();
-    iter = vec.begin();
-    ROS_INFO("File close, end.");
-    // sensor_msgs::Joy a;
-    // a.header.stamp = ros::Time::now();
-    // a.header.frame_id = "/dev/input/js0";
-    // a.axes = std::vector<float>{0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0};
-    // a.buttons = std::vector<int>{0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0};
-    // sleep(10);
-    // joy_pub.publish(a);
-    // std::cout << "joy" << std::endl;
   }
 }
