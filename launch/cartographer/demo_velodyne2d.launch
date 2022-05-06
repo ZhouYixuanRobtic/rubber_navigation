@@ -1,0 +1,14 @@
+<!-- online cartographer mapping without odom-->
+<launch>
+    <arg name="load_state_filename"/>
+	<param name="/use_sim_time" value="false"/>
+<!-- sensor bringup-->	
+	<!--include file="$(find velodyne_pointcloud)/launch/VLP16_points.launch"/-->
+<!-- leishen bringup-->
+    <include file="$(find lslidar_c16_decoder)/launch/lslidar_c16.launch"/>
+<!-- cartographer mapping core bring up-->
+	<include file="$(find rubber_navigation)/launch/cartographer/velodyne2d.launch"/>
+<!-- visualization -->
+	<node name="rviz" pkg="rviz" type="rviz" required="true" 
+		  args="-d $(find cartographer_ros)/configuration_files/demo_2d.rviz"/>
+</launch>

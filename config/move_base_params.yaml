@@ -1,14 +1,14 @@
 #FileName: move_base_params.yaml
- 
+
 #Author: Fang
- 
+
 #History:
 # 20190417: Initial this file.
 base_global_planner: "global_planner/GlobalPlanner"
 base_local_planner: "dwa_local_planner/DWAPlannerROS"
 shutdown_costmaps: false
-controller_frequency: 15.0
-planner_frequency: 0.0
+controller_frequency: 7.0
+planner_frequency: 1.0 # 0
 controller_patience: 3.0
 planner_patience: 5.0
 oscillation_timeout: 4.0
@@ -20,7 +20,7 @@ recovery_behavior_enabled: false
 recovery_behaviors: [{name: conservative_reset, type: clear_costmap_recovery/ClearCostmapRecovery}, {name: aggressive_reset, type: clear_costmap_recovery/ClearCostmapRecovery}] #default
 #{name: rotate_recovery, type: rotate_recovery/RotateRecovery} deleted by zyx 2020/01/10 in case of undesired rotation
 conservative_reset_dist: 3.0
- 
+
 #Description:
 # move_base软件包的通用配置参数,现在依次解释每个参数意义:
 #   base_local_planner:指定用于move_base的局部规划器插件名称.
@@ -37,15 +37,15 @@ conservative_reset_dist: 3.0
 #   planner_patience:在空间清理操作执行前,留给规划器多长时间来找出一条有效规划.
 #   oscillation_timeout:执行修复机制前,允许振荡的时长.
 #   oscillation_distance:来回运动在多大距离以上不会被认为是振荡.
-#   clearing_rotation_allowed (bool, default: true) :Determines whether or not the robot will attempt an in-place rotation when attempting to clear out space. Note: This parameter is only used when the default recovery behaviors are in use, meaning the user has not set the recovery_behaviors parameter to anything custom. 
+#   clearing_rotation_allowed (bool, default: true) :Determines whether or not the robot will attempt an in-place rotation when attempting to clear out space. Note: This parameter is only used when the default recovery behaviors are in use, meaning the user has not set the recovery_behaviors parameter to anything custom.
 
-#   max_planning_retries (int32_t, default: -1) :How many times to allow for planning retries before executing recovery behaviors. A value of -1.0 corresponds to an infinite retries. 
+#   max_planning_retries (int32_t, default: -1) :How many times to allow for planning retries before executing recovery behaviors. A value of -1.0 corresponds to an infinite retries.
 
-#   conservative_reset_dist (double, default: 3.0) :The distance away from the robot in meters beyond which obstacles will be cleared from the costmap when attempting to clear space in the map. Note, this parameter is only used when the default recovery behaviors are used for move_base. 
+#   conservative_reset_dist (double, default: 3.0) :The distance away from the robot in meters beyond which obstacles will be cleared from the costmap when attempting to clear space in the map. Note, this parameter is only used when the default recovery behaviors are used for move_base.
 
-#   recovery_behavior_enabled (bool, default: true) :Whether or not to enable the move_base recovery behaviors to attempt to clear out space. 
+#   recovery_behavior_enabled (bool, default: true) :Whether or not to enable the move_base recovery behaviors to attempt to clear out space.
 
-#   recovery_behaviors: 
+#   recovery_behaviors:
 
 #History:
 # 20180726: initial this comment.

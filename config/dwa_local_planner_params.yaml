@@ -5,26 +5,26 @@
 #History:
 # 20190417: Initial this file.
 DWAPlannerROS:
-  acc_lim_x: 1.6  # maximum is theoretically 2.0
+  acc_lim_x: 2.0  # maximum is theoretically 2.0
   acc_lim_y: 0.0  # diff drive robot
-  acc_lim_theta: 3.2
-  acc_limit_trans: 1.6
-  max_trans_vel: 0.4 #choose slightly less than the base's capability
-  min_trans_vel: 0.1 #this is the min trans velocity when there is negligible rotational velocity
- 
-  max_vel_x: 0.4
-  min_vel_x: 0.1
+  acc_lim_theta: 5 #3.2
+  acc_lim_trans: 2.0
+  max_vel_trans: 0.5 #choose slightly less than the base's capability
+  min_vel_trans: 0.1 #this is the min trans velocity when there is negligible rotational velocity
+
+  max_vel_x: 0.5
+  min_vel_x: -0.3
   max_vel_y: 0.0  #diff drive robot,don't need set vel_y
   min_vel_y: 0.0
- 
-  max_rot_vel: 1.2  #choose slightly less than the base's capability
-  min_rot_vel: 0.8  #this is the min angular velocity when there is negligible translational velocity
- 
+
+  max_vel_theta: 1.0 #1.5  #choose slightly less than the base's capability
+  min_vel_theta: 0.8 #0.8  #this is the min angular velocity when there is negligible translational velocity
+
 # Goal Tolerance Parameters
-  yaw_goal_tolerance: 0.10  # 0.1 rad = 5.7 degree
-  xy_goal_tolerance: 0.10
+  yaw_goal_tolerance: 0.1 #0.1 # 0.1 rad = 5.7 degree
+  xy_goal_tolerance: 0.1 #0.1
   latch_xy_goal_tolerance: true
- 
+
 # Forward Simulation Parameters
   sim_time: 1.0    # 1.7
   sim_granularity: 0.05
@@ -32,20 +32,20 @@ DWAPlannerROS:
   vy_samples: 0    # diff drive robot, there is only one sample
   vth_samples: 20  # 20
   controller_frequency: 7.0
- 
+
 # Trajectory Scoring Parameters
   path_distance_bias: 8.0      # 32.0
   goal_distance_bias: 6.0    # 24.0
-  occdist_scale: 0.05          # 0.01
+  occdist_scale: 0.02          # 0.01
   forward_point_distance: 0.325 # 0.325
   stop_time_buffer: 0.2         # 0.2
   scaling_speed: 0.25           # 0.25
   max_scaling_factor: 0.2       # 0.2
   publish_cost_grid: false
- 
+
 # Oscillation Prevention Parameters
   oscillation_reset_dist: 0.02  # default 0.05
- 
+
 # Global Plan Parameters
   prune_plan: true
 #Description:

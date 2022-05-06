@@ -33,6 +33,7 @@ find_package(catkin REQUIRED COMPONENTS
   roslib
   std_srvs
   tf
+  visual_servo
 )
 
 find_package(PkgConfig REQUIRED)
@@ -129,3 +130,8 @@ target_link_libraries(logger ${catkin_LIBRARIES})
 
 add_executable(target_writer src/initial_pose.cpp)
 target_link_libraries(target_writer ${catkin_LIBRARIES})
+
+add_executable(datatest src/datatest.cpp)
+target_link_libraries(datatest ${catkin_LIBRARIES})
+add_executable(testtest src/testtest.cpp)
+target_link_libraries(testtest ${catkin_LIBRARIES})
